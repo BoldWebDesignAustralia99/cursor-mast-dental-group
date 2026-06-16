@@ -14,10 +14,11 @@ import { NotificationsPage } from '@/pages/NotificationsPage'
 import { CallQueuePage } from '@/pages/leads/CallQueuePage'
 import { LeadsListPage } from '@/pages/leads/LeadsListPage'
 import { LeadRecordPage } from '@/pages/leads/LeadRecordPage'
-import { BookingsPage } from '@/pages/bookings/BookingsPage'
-import { ClinicsPage } from '@/pages/clinics/ClinicsPage'
-import { TrainingPage } from '@/pages/training/TrainingPage'
-import { TeamPage } from '@/pages/team/TeamPage'
+import { ClinicsRoutes } from '@/pages/clinics/ClinicsRoutes'
+import { BookingsRoutes } from '@/pages/bookings/BookingsRoutes'
+import { TrainingRoutes } from '@/pages/training/TrainingRoutes'
+import { TeamRoutes } from '@/pages/team/TeamRoutes'
+import { AdminRoutes } from '@/pages/admin/AdminRoutes'
 import {
   PortalBookingsPage,
   PortalCreditsPage,
@@ -45,7 +46,6 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-      {/* Focused lead record — no app shell sidebar */}
       <Route
         path="/leads/:id"
         element={
@@ -70,14 +70,15 @@ function AppRoutes() {
         <Route path="notifications" element={<NotificationsPage />} />
         <Route path="calls/queue" element={<CallQueuePage />} />
         <Route path="leads" element={<LeadsListPage />} />
-        <Route path="bookings/*" element={<BookingsPage />} />
-        <Route path="clinics/*" element={<ClinicsPage />} />
-        <Route path="training/*" element={<TrainingPage />} />
-        <Route path="team/*" element={<TeamPage />} />
+        <Route path="bookings/*" element={<BookingsRoutes />} />
+        <Route path="clinics/*" element={<ClinicsRoutes />} />
+        <Route path="training/*" element={<TrainingRoutes />} />
+        <Route path="team/*" element={<TeamRoutes />} />
+        <Route path="admin/*" element={<AdminRoutes />} />
         <Route path="portal/bookings" element={<PortalBookingsPage />} />
         <Route path="portal/calendar" element={<PortalCalendarPage />} />
         <Route path="portal/credits" element={<PortalCreditsPage />} />
-        <Route path="portal/*" element={<PortalBookingsPage />} />
+        <Route path="portal/messages" element={<PortalBookingsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

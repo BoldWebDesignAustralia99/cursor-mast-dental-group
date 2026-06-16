@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Sparkles } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   format,
@@ -27,6 +28,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { LiveCopilotPanel } from '@/components/calls/LiveCopilotPanel'
 import {
   useLead,
   useCallFlowStages,
@@ -151,6 +153,7 @@ export function LeadRecordPage() {
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState(new Date(2026, 5, 17))
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
+  const [copilotOpen, setCopilotOpen] = useState(false)
 
   const defaultClinicId = clinics?.find((c) => c.is_recommended)?.clinic_id ?? clinics?.[0]?.clinic_id ?? ''
   const clinicId = selectedClinicId ?? defaultClinicId
@@ -227,6 +230,15 @@ export function LeadRecordPage() {
           <CallTimer targetMinutes={30} />
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-2"
+              onClick={() => setCopilotOpen(true)}
+            >
+              <Sparkles className="size-3.5" />
+              Copilot
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -502,6 +514,7 @@ export function LeadRecordPage() {
           </aside>
         </div>
       </div>
+      <LiveCopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
     </div>
   )
 }

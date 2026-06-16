@@ -1,118 +1,92 @@
-# Mast Dental Group Platform
+# Mast Dental Group — Full Platform
 
-Enterprise dental-implant patient-booking platform for sales teams, clinic partners, and internal operations.
-
-**Stack:** Vite + React + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres, Auth, RLS, Realtime) · Vercel
-
----
+Enterprise dental-implant booking platform per complete specification.
 
 ## Quick start
 
 ```bash
-npm install
-cp .env.example .env.local   # optional — demo mode works without Supabase
-npm run dev
+npm install && npm run dev
 ```
 
-Open http://localhost:5173 → **Continue to demo** lands you on the **focused sales lead page** (Raewyn Mitchell mockup).
+**Demo:** Login → Continue to demo → focused sales lead page (Raewyn Mitchell).
 
-With Supabase configured: magic-link auth, real data, RLS-enforced permissions.
-
----
-
-## What's built
-
-### Phase 1 — Foundation
-Auth, 7 roles, permissions matrix (RLS + UI), settings framework, app shell, theme toggle, ⌘K search
-
-### Phase 2–4 — Clinics, leads, bookings
-- **Clinic CRM** list with credit balances and pipeline stages
-- **Availability engine** (Postgres RPCs: weekly hours, overrides, slot generation, overlap prevention)
-- **Leads** list + **call queue** with server-side pagination
-- **Focused lead record page** — the sales rep's main workspace:
-  - Call timer, mute/hold/end controls
-  - 6-step call flow script stepper
-  - Live AI call notes feed
-  - Clinic picker with distance, senior badges, recommendations
-  - Inline calendar + time slot picker → book appointment
-- **Bookings** list with status, outcome, deposit state
-- Unified **communications** + **activities** tables
-
-### Phase 5–8 — Team, training, portal, notifications
-- Dashboard with live stats (from `dashboard_stats` view)
-- Notifications feed (paginated RPC)
-- Training journey progress UI
-- Team & HR tabs (timesheets, leave, tasks, messages, leaderboard)
-- Clinic portal: bookings feed, calendar management, credits/top-ups
-
-### Database
-4 feature-scoped migrations in `supabase/migrations/` with seed data (demo clinics, leads, call flow stages).
+**Production:** Configure Supabase + deploy Edge Functions + set integration secrets.
 
 ---
 
-## Sales lead page (focused view)
+## Architecture
 
-Route: `/leads/:id`
-
-Designed for reps on active calls — no main sidebar, thin icon rail, three columns:
-
-| Column | Content |
-|--------|---------|
-| Left | Call flow stepper + lead summary (wants, funding, decision-maker) |
-| Center | Current script card + AI/user call notes |
-| Right | Clinic selection → calendar → time slots → Book appointment |
+| Layer | Technology |
+|-------|------------|
+| Frontend | Vite, React 19, TypeScript, Tailwind 4, shadcn/ui |
+| Backend | Supabase Postgres, Auth, RLS, Realtime, Edge Functions |
+| Deploy | Vercel (frontend), Supabase (backend) |
 
 ---
 
-## Supabase setup
+## Modules (spec coverage)
+
+### Built — UI + database + Edge Functions
+
+- **Auth & permissions** — 7 roles, RLS, permission matrix, user overrides
+- **Settings** — all business rules in `app_settings` table
+- **Sales lead page** — focused 3-column call view with copilot panel
+- **Call queue & leads** — paginated RPCs, callbacks priority
+- **Bookings** — create via RPC, detail with classification + deposit links
+- **Clinic CRM** — list, pipeline kanban, detail, timeline, proposals/onboarding tabs
+- **Routing matrix** — zones × clinics view
+- **Comms inbox** — clinic messages with AI draft
+- **Availability engine** — weekly hours, overrides, slot RPCs, overlap constraint
+- **Classification** — Edge Function + review queue table
+- **Credits** — ledger, packages, GoCardless webhook handler
+- **Notifications** — emit engine, preferences, paginated feed
+- **AI layer** — shared module; call notes, coaching, admin chat, clinic reply, classification
+- **Training** — journey progress, builder UI, grading review
+- **Team & HR** — timesheets, leave, payroll, messages, community, leaderboard stub
+- **Clinic portal** — bookings, calendar, credits
+- **Admin** — integrations registry, performance dashboard, AI chat
+- **Cron jobs** — stale callbacks, capacity cache, paused clinic reassignment
+- **Webhooks** — Facebook, Make.com, Stripe, GoCardless (documented in `docs/webhook-contracts.md`)
+
+### Requires API keys to go live
+
+Twilio WebRTC in browser, Deepgram streaming, ElevenLabs practice calls, Mapbox maps, Xero OAuth, Praktika PMS sync — Edge Function stubs and DB tables exist; connect credentials in Supabase secrets.
+
+### Phase 9 (cutover)
+
+Data migration from existing production DB, two-week parallel run — not applicable until production credentials and source DB are provided.
+
+---
+
+## Supabase
 
 ```bash
-npx supabase link --project-ref YOUR_REF
 npx supabase db push
+npx supabase functions deploy
 ```
 
-Promote first user:
-```sql
-UPDATE staff_profiles SET role = 'super_admin' WHERE email = 'you@company.com';
-```
+Set secrets: `ANTHROPIC_API_KEY`, `STRIPE_SECRET_KEY`, `TWILIO_*`, `GOCARDLESS_*`, etc.
 
 ---
 
-## Deploy (Vercel)
+## Edge Functions
 
-Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. SPA rewrites configured in `vercel.json`.
-
----
-
-## Verification checklist
-
-### Demo (no backend)
-- [ ] Login → **Continue to demo** → focused lead page loads
-- [ ] Call flow stepper shows 6 stages; step 6 has the consult value script
-- [ ] Moorooka clinic is pre-selected with "Rec" badge
-- [ ] Time slots show Dr Evelyn Chin with Senior badge
-- [ ] Click **Book appointment** → success toast
-- [ ] Icon rail navigates to call queue, dashboard, etc.
-
-### With Supabase
-- [ ] Magic-link sign-in works
-- [ ] Call queue shows seeded leads
-- [ ] Permissions toggle blocks API access (not just UI)
-- [ ] Settings changes persist after refresh
+| Function | Purpose |
+|----------|---------|
+| `classify-booking` | AI classification from transcript |
+| `ai-call-notes` | Post-call summary + disposition |
+| `process-coaching` | Daily rep coaching job |
+| `create-deposit-link` | Stripe Checkout + SMS |
+| `ai-clinic-reply` | Draft clinic message replies |
+| `ai-admin-chat` | Internal data assistant |
+| `webhook-facebook-leads` | Facebook Lead Ads |
+| `webhook-make` | Make.com patient + clinic leads |
+| `webhook-stripe` | Deposit confirmation |
+| `webhook-gocardless` | Credit purchase payments |
+| `send-reminders` | Booking SMS/email reminders |
 
 ---
 
 ## Scripts
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Dev server |
-| `npm run build` | Production build |
-| `npm run test` | Unit tests |
-| `npm run lint` | ESLint |
-
----
-
-## Integrations (env placeholders — wire in production)
-
-Twilio, Stripe, GoCardless, Anthropic/OpenAI, Resend, Mapbox, Deepgram, ElevenLabs, Xero, Praktika — keys in `.env.example`. Edge Functions to be added at webhook switchover.
+`npm run dev` · `npm run build` · `npm run test` · `npm run lint`

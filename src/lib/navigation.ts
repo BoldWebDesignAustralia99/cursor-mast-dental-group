@@ -76,6 +76,12 @@ const internalNav: NavGroup[] = [
         mobileTab: true,
       },
       {
+        title: 'Routing matrix',
+        href: '/clinics/routing',
+        icon: Building2,
+        permission: 'leads.manage',
+      },
+      {
         title: 'Comms inbox',
         href: '/clinics/inbox',
         icon: MessageSquare,
@@ -108,6 +114,24 @@ const internalNav: NavGroup[] = [
         href: '/settings',
         icon: Settings,
         permission: 'settings.view',
+      },
+      {
+        title: 'Integrations',
+        href: '/admin/integrations',
+        icon: Settings,
+        permission: 'integrations.manage',
+      },
+      {
+        title: 'AI chat',
+        href: '/admin/chat',
+        icon: MessageSquare,
+        permission: 'ai.admin_chat',
+      },
+      {
+        title: 'Performance',
+        href: '/admin/performance',
+        icon: LayoutDashboard,
+        permission: 'dashboard.view',
       },
       {
         title: 'Permissions',
