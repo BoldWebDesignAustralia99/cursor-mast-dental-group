@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PageHeader } from '@/components/shared/PageStates'
+import { PaginationControls } from '@/components/shared/PaginationControls'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { useBookingsList } from '@/hooks/useDashboard'
 import { Input } from '@/components/ui/input'
@@ -57,13 +58,11 @@ export function BookingsPage() {
         )}
 
         {totalPages > 1 && (
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Page {page} of {totalPages}</span>
-            <div className="flex gap-2">
-              <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="underline disabled:opacity-40">Previous</button>
-              <button type="button" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="underline disabled:opacity-40">Next</button>
-            </div>
-          </div>
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         )}
       </div>
     </PermissionGate>

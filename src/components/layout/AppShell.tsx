@@ -15,9 +15,9 @@ export function AppShell() {
   if (isLoading || !profile) {
     return (
       <div className="flex min-h-screen">
-        <Skeleton className="hidden w-64 md:block" />
+        <Skeleton className="hidden w-52 md:block" />
         <div className="flex flex-1 flex-col">
-          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-11 w-full" />
           <div className="p-6 space-y-4">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-40 w-full" />

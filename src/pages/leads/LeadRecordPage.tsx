@@ -115,20 +115,21 @@ function MiniCalendar({
           const selectedDay = isSameDay(day, selected)
           const today = isToday(day)
           return (
-            <button
+            <Button
               key={day.toISOString()}
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => onSelect(day)}
               className={cn(
-                'flex size-8 items-center justify-center rounded-md text-sm transition-colors',
+                'size-8 rounded-sm text-sm font-normal',
                 !isSameMonth(day, viewMonth) && 'text-muted-foreground/40',
-                selectedDay && 'bg-foreground text-background font-medium',
+                selectedDay && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground',
                 !selectedDay && today && 'ring-1 ring-border',
-                !selectedDay && 'hover:bg-accent',
               )}
             >
               {format(day, 'd')}
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -276,14 +277,13 @@ export function LeadRecordPage() {
                 <ol className="space-y-0.5">
                   {stages?.map((stage, i) => (
                     <li key={stage.id}>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         onClick={() => setActiveStage(i)}
                         className={cn(
-                          'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-                          i === activeStage
-                            ? 'bg-accent'
-                            : 'hover:bg-accent/50',
+                          'h-auto w-full items-start justify-start gap-3 rounded-sm px-2 py-1.5 text-left font-normal',
+                          i === activeStage && 'bg-accent',
                         )}
                       >
                         <span
@@ -304,7 +304,7 @@ export function LeadRecordPage() {
                             <p className="text-[11px] text-muted-foreground">{stage.time_range}</p>
                           )}
                         </div>
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ol>
@@ -427,15 +427,16 @@ export function LeadRecordPage() {
                 </p>
                 <div className="space-y-2">
                   {clinics?.map((clinic) => (
-                    <button
+                    <Button
                       key={clinic.clinic_id}
                       type="button"
+                      variant="outline"
                       onClick={() => setSelectedClinicId(clinic.clinic_id)}
                       className={cn(
-                        'w-full rounded-xl border p-3 text-left transition-colors',
+                        'h-auto w-full flex-col items-start rounded-lg p-3 text-left font-normal',
                         selectedClinicId === clinic.clinic_id || (!selectedClinicId && clinic.is_recommended)
-                          ? 'border-foreground/30 bg-accent/50 ring-1 ring-foreground/10'
-                          : 'border-border/40 hover:bg-accent/30',
+                          ? 'border-primary/30 bg-accent/50 ring-1 ring-primary/10'
+                          : 'border-border/40',
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -462,7 +463,7 @@ export function LeadRecordPage() {
                           <Badge variant="error" className="text-[10px]">No senior</Badge>
                         )}
                       </div>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -480,15 +481,16 @@ export function LeadRecordPage() {
                 </p>
                 <div className="space-y-1.5">
                   {slots?.map((slot) => (
-                    <button
+                    <Button
                       key={slot.slot_start}
                       type="button"
+                      variant="outline"
                       onClick={() => setSelectedSlot(slot.slot_start)}
                       className={cn(
-                        'flex w-full items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-colors',
+                        'h-auto w-full justify-between rounded-lg px-3 py-2 font-normal',
                         selectedSlot === slot.slot_start
-                          ? 'border-foreground/30 bg-accent/50'
-                          : 'border-border/40 hover:bg-accent/30',
+                          ? 'border-primary/30 bg-accent/50'
+                          : 'border-border/40',
                       )}
                     >
                       <span className="text-sm font-medium tabular-nums">{slot.label}</span>
@@ -498,7 +500,7 @@ export function LeadRecordPage() {
                           <Badge variant="success" className="text-[10px]">Senior</Badge>
                         )}
                       </div>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>

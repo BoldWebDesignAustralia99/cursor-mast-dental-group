@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import { useAuth } from '@/providers/AuthProvider'
 
 const RAIL_ITEMS = [
@@ -25,41 +26,41 @@ export function FocusRail() {
   const initials = profile?.full_name?.split(' ').map((p) => p[0]).join('').slice(0, 2)
 
   return (
-    <div className="flex w-14 shrink-0 flex-col items-center border-r border-border/40 bg-background py-4">
-      <div className="mb-6 flex size-8 items-center justify-center rounded-md bg-foreground text-background text-xs font-bold">
+    <div className="flex w-12 shrink-0 flex-col items-center border-r border-border bg-sidebar py-3">
+      <div className="mb-4 flex size-7 items-center justify-center rounded-md bg-primary text-[10px] font-bold text-primary-foreground">
         MD
       </div>
-      <nav className="flex flex-1 flex-col items-center gap-1">
+      <nav className="flex flex-1 flex-col items-center gap-0.5">
         {RAIL_ITEMS.map((item) => {
           const isActive =
             item.active ||
             location.pathname.startsWith(item.href)
           return (
-            <Link
+            <Button
               key={item.href}
-              to={item.href}
-              title={item.label}
+              variant="ghost"
+              size="icon"
               className={cn(
-                'flex size-11 items-center justify-center rounded-lg transition-colors',
-                isActive
-                  ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                'size-8 rounded-sm',
+                isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
               )}
+              asChild
             >
-              <item.icon className="size-[18px]" strokeWidth={1.75} />
-            </Link>
+              <Link to={item.href} title={item.label}>
+                <item.icon className="size-3.5" strokeWidth={1.75} />
+              </Link>
+            </Button>
           )
         })}
       </nav>
-      <div className="mt-auto flex flex-col items-center gap-2">
-        <Link
-          to="/settings"
-          className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-        >
-          <Settings className="size-[18px]" strokeWidth={1.75} />
-        </Link>
-        <Avatar className="size-8">
-          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+      <div className="mt-auto flex flex-col items-center gap-1.5">
+        <Button variant="ghost" size="icon" className="size-8 rounded-sm" asChild>
+          <Link to="/settings" title="Settings">
+            <Settings className="size-3.5" strokeWidth={1.75} />
+          </Link>
+        </Button>
+        <Avatar className="size-7">
+          <AvatarFallback className="text-[9px]">{initials}</AvatarFallback>
         </Avatar>
       </div>
     </div>

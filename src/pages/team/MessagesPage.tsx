@@ -19,9 +19,14 @@ export function MessagesPage() {
         <Card className="border-border/40">
           <CardContent className="p-2">
             {['Sales team', 'Sarah Chen', 'Mike Torres'].map((c) => (
-              <button key={c} type="button" className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-accent/50">
+              <Button
+                key={c}
+                type="button"
+                variant="ghost"
+                className="h-8 w-full justify-start px-2 text-sm font-normal"
+              >
                 {c}
-              </button>
+              </Button>
             ))}
           </CardContent>
         </Card>

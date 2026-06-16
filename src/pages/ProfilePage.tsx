@@ -3,18 +3,12 @@ import { useThemePreference } from '@/providers/ThemeProvider'
 import { PageHeader } from '@/components/shared/PageStates'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ROLE_LABELS, THEME_PREFERENCES } from '@/lib/constants'
+import { Switch } from '@/components/ui/switch'
+import { ROLE_LABELS } from '@/lib/constants'
 
 export function ProfilePage() {
   const { profile } = useAuth()
-  const { preference, setPreference } = useThemePreference()
+  const { isDark, setDarkMode } = useThemePreference()
 
   return (
     <div className="space-y-6">
@@ -50,23 +44,18 @@ export function ProfilePage() {
           <CardTitle>Display</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <Label>Theme</Label>
-            <Select
-              value={preference}
-              onValueChange={(v) =>
-                setPreference(v as (typeof THEME_PREFERENCES)[number])
-              }
-            >
-              <SelectTrigger className="max-w-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="system">System default</SelectItem>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex max-w-md items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="profile-dark-mode">Dark mode</Label>
+              <p className="text-sm text-muted-foreground">
+                Dark is the default. Turn off for light mode.
+              </p>
+            </div>
+            <Switch
+              id="profile-dark-mode"
+              checked={isDark}
+              onCheckedChange={setDarkMode}
+            />
           </div>
         </CardContent>
       </Card>

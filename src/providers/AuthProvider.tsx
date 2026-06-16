@@ -22,7 +22,7 @@ const DEMO_PROFILE: StaffProfile = {
   role: 'super_admin',
   phone: null,
   avatar_url: null,
-  theme_preference: 'system',
+  theme_preference: 'dark',
   is_active: true,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),

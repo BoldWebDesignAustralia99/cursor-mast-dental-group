@@ -1,12 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Moon,
-  Monitor,
-  Search,
-  Sun,
-} from 'lucide-react'
+import { Bell, ChevronLeft, ChevronRight, Moon, Search, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -17,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/providers/AuthProvider'
 import { useThemePreference } from '@/providers/ThemeProvider'
 import { signOut } from '@/hooks/useAuth'
@@ -35,7 +30,7 @@ export function TopBar({
   onOpenSearch,
 }: TopBarProps) {
   const { profile } = useAuth()
-  const { preference, setPreference } = useThemePreference()
+  const { isDark, setDarkMode } = useThemePreference()
   const location = useLocation()
 
   const initials = profile?.full_name
@@ -46,88 +41,69 @@ export function TopBar({
     .toUpperCase()
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/40 bg-background/80 px-4 backdrop-blur-sm">
+    <header className="sticky top-0 z-30 flex h-11 items-center gap-3 border-b border-border bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <Button
         variant="ghost"
         size="icon"
+        className="size-8"
         onClick={onToggleSidebar}
         aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
-        {sidebarCollapsed ? <ChevronRight /> : <ChevronLeft />}
+        {sidebarCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
       </Button>
 
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={onOpenSearch}
         className={cn(
-          'hidden flex-1 items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground md:flex md:max-w-md',
+          'hidden h-8 flex-1 items-center justify-start gap-2 px-3 text-sm font-normal text-muted-foreground md:flex md:max-w-sm',
         )}
       >
-        <Search className="size-4" />
+        <Search className="size-3.5 shrink-0" />
         <span>Search…</span>
-        <kbd className="ml-auto rounded border bg-background px-1.5 py-0.5 text-xs">
+        <kbd className="pointer-events-none ml-auto hidden rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium lg:inline-block">
           ⌘K
         </kbd>
-      </button>
+      </Button>
 
-      <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={onOpenSearch}>
-          <Search />
+      <div className="ml-auto flex items-center gap-1.5">
+        <Button variant="ghost" size="icon" className="size-8 md:hidden" onClick={onOpenSearch}>
+          <Search className="size-4" />
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Theme">
-              {preference === 'dark' ? (
-                <Moon />
-              ) : preference === 'light' ? (
-                <Sun />
-              ) : (
-                <Monitor />
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Theme</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setPreference('light')}>
-              <Sun className="mr-2 size-4" /> Light
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setPreference('dark')}>
-              <Moon className="mr-2 size-4" /> Dark
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setPreference('system')}>
-              <Monitor className="mr-2 size-4" /> System
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="hidden items-center gap-1.5 rounded-md border border-border px-2 py-1 sm:flex">
+          <Sun className="size-3.5 text-muted-foreground" aria-hidden />
+          <Switch
+            id="theme-toggle"
+            checked={isDark}
+            onCheckedChange={setDarkMode}
+            aria-label="Toggle dark mode"
+            className="scale-90"
+          />
+          <Moon className="size-3.5 text-muted-foreground" aria-hidden />
+          <Label htmlFor="theme-toggle" className="sr-only">
+            Dark mode
+          </Label>
+        </div>
 
-        <Button variant="ghost" size="icon" asChild>
+        <Button variant="ghost" size="icon" className="size-8 sm:hidden" asChild>
+          <Link to="/profile" aria-label="Theme settings">
+            {isDark ? <Moon className="size-4" /> : <Sun className="size-4" />}
+          </Link>
+        </Button>
+
+        <Button variant="ghost" size="icon" className="size-8" asChild>
           <Link to="/notifications" aria-label="Notifications">
-            <span className="relative">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-            </span>
+            <Bell className="size-4" />
           </Link>
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative size-11 rounded-full p-0 md:size-9">
-              <Avatar className="size-9">
-                <AvatarFallback>{initials ?? '?'}</AvatarFallback>
+            <Button variant="ghost" className="relative size-8 rounded-full p-0">
+              <Avatar className="size-8">
+                <AvatarFallback className="text-[10px]">{initials ?? '?'}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>

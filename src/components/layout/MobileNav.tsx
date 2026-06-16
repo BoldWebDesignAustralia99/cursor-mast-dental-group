@@ -19,7 +19,7 @@ export function MobileNav({ role }: MobileNavProps) {
   if (tabs.length === 0) return null
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background md:hidden">
       <div className="grid" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
         {tabs.map((tab) => {
           const isActive = location.pathname.startsWith(tab.href)
@@ -28,11 +28,11 @@ export function MobileNav({ role }: MobileNavProps) {
               key={tab.href}
               to={tab.href}
               className={cn(
-                'flex min-h-14 flex-col items-center justify-center gap-1 px-2 py-2 text-xs',
-                isActive ? 'text-foreground font-medium' : 'text-muted-foreground',
+                'flex min-h-12 flex-col items-center justify-center gap-0.5 px-2 py-1.5 text-[10px]',
+                isActive ? 'font-medium text-foreground' : 'text-muted-foreground',
               )}
             >
-              <tab.icon className="size-5" />
+              <tab.icon className="size-4" strokeWidth={1.75} />
               <span className="truncate">{tab.title}</span>
             </Link>
           )

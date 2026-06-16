@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 const DEMO_CUES = [
@@ -31,7 +32,9 @@ export function LiveCopilotPanel({ open, onClose }: LiveCopilotPanelProps) {
           <span className="text-sm font-medium">Live copilot</span>
           <Badge variant="info">Live</Badge>
         </div>
-        <button type="button" onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground">Close</button>
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+          Close
+        </Button>
       </div>
       <ScrollArea className="h-[calc(100vh-3.5rem)]">
         <div className="space-y-4 p-4">

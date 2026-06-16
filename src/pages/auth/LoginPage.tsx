@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { signInWithMagicLink } from '@/hooks/useAuth'
 import { enableDemoMode } from '@/lib/demo'
 
@@ -78,11 +79,11 @@ export function LoginPage() {
             </form>
           )}
           {!import.meta.env.VITE_SUPABASE_URL && (
-            <div className="mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-              <p className="font-medium">Demo mode</p>
-              <p className="mt-1 text-muted-foreground">
+            <Alert className="mt-4 border-amber-500/30 bg-amber-500/10">
+              <AlertTitle>Demo mode</AlertTitle>
+              <AlertDescription>
                 Supabase is not configured. You can explore the UI shell without signing in.
-              </p>
+              </AlertDescription>
               <Button
                 variant="outline"
                 className="mt-3 w-full"
@@ -90,7 +91,7 @@ export function LoginPage() {
               >
                 Continue to demo
               </Button>
-            </div>
+            </Alert>
           )}
         </CardContent>
       </Card>
