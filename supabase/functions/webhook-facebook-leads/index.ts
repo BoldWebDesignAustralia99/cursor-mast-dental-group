@@ -3,6 +3,8 @@ import { getServiceClient, jsonResponse, corsHeaders } from '../_shared/supabase
 // Facebook Lead Ads webhook (§5.1)
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders() })
+
+  if (req.method === 'GET') {
     const mode = new URL(req.url).searchParams.get('hub.mode')
     const token = new URL(req.url).searchParams.get('hub.verify_token')
     const challenge = new URL(req.url).searchParams.get('hub.challenge')
