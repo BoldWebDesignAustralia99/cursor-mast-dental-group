@@ -91,7 +91,7 @@ export default function App() {
     <QueryProvider>
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || undefined}>
             <AppRoutes />
             <Toaster richColors position="top-right" />
           </BrowserRouter>

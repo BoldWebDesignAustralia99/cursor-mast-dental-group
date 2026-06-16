@@ -4,9 +4,23 @@ Enterprise dental-implant booking platform per complete specification.
 
 ## Quick start
 
+### Live demo (easiest)
+
+**GitHub Pages:** https://boldwebdesignaustralia99.github.io/cursor-mast-dental-group/
+
+1. Open the link above
+2. Click **Continue to demo** on the login page
+3. Explore the full UI (no Supabase required)
+
+> If the link shows 404, enable Pages once: GitHub repo → **Settings** → **Pages** → Source: **GitHub Actions**, then re-run the **Deploy demo site to GitHub Pages** workflow.
+
+### Run locally
+
 ```bash
 npm install && npm run dev
 ```
+
+Open **http://localhost:5173** → Login → **Continue to demo**.
 
 **Demo:** Login → Continue to demo → focused sales lead page (Raewyn Mitchell).
 
