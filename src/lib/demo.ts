@@ -1,6 +1,6 @@
 export function enableDemoMode() {
   sessionStorage.setItem('demo_mode', 'true')
-  window.location.href = '/dashboard'
+  window.location.href = '/leads/c0000001-0000-4000-8000-000000000001'
 }
 
 export function isDemoModeEnabled() {

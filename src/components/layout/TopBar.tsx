@@ -46,7 +46,7 @@ export function TopBar({
     .toUpperCase()
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/40 bg-background/80 px-4 backdrop-blur-sm">
       <Button
         variant="ghost"
         size="icon"

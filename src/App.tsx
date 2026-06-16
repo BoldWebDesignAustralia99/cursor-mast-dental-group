@@ -11,8 +11,18 @@ import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { PermissionsPage } from '@/pages/permissions/PermissionsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
-import { PlaceholderPage } from '@/pages/PlaceholderPage'
-
+import { CallQueuePage } from '@/pages/leads/CallQueuePage'
+import { LeadsListPage } from '@/pages/leads/LeadsListPage'
+import { LeadRecordPage } from '@/pages/leads/LeadRecordPage'
+import { BookingsPage } from '@/pages/bookings/BookingsPage'
+import { ClinicsPage } from '@/pages/clinics/ClinicsPage'
+import { TrainingPage } from '@/pages/training/TrainingPage'
+import { TeamPage } from '@/pages/team/TeamPage'
+import {
+  PortalBookingsPage,
+  PortalCreditsPage,
+  PortalCalendarPage,
+} from '@/pages/portal/PortalPages'
 import { isSupabaseConfigured } from '@/lib/demo'
 
 function AuthRedirect({ children }: { children: React.ReactNode }) {
@@ -34,6 +44,17 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+      {/* Focused lead record — no app shell sidebar */}
+      <Route
+        path="/leads/:id"
+        element={
+          <AuthRedirect>
+            <LeadRecordPage />
+          </AuthRedirect>
+        }
+      />
+
       <Route
         element={
           <AuthRedirect>
@@ -47,77 +68,18 @@ function AppRoutes() {
         <Route path="permissions" element={<PermissionsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="notifications" element={<NotificationsPage />} />
-        <Route
-          path="calls/queue"
-          element={
-            <PlaceholderPage
-              title="Call queue"
-              description="Your main calling screen with configurable tabs and one-click actions"
-              permission="calls.queue.view"
-            />
-          }
-        />
-        <Route
-          path="leads/*"
-          element={
-            <PlaceholderPage
-              title="Leads"
-              description="Patient lead records, assignment, and timeline"
-              permission="leads.view"
-            />
-          }
-        />
-        <Route
-          path="bookings/*"
-          element={
-            <PlaceholderPage
-              title="Bookings"
-              description="Appointment booking, rescheduling, and outcomes"
-              permission="bookings.view"
-            />
-          }
-        />
-        <Route
-          path="clinics/*"
-          element={
-            <PlaceholderPage
-              title="Clinic CRM"
-              description="Pipeline, proposals, onboarding, and billing"
-              permission="clinics.view"
-            />
-          }
-        />
-        <Route
-          path="training/*"
-          element={
-            <PlaceholderPage
-              title="Training"
-              description="Journeys, stages, and practice calls"
-              permission="training.view"
-            />
-          }
-        />
-        <Route
-          path="team/*"
-          element={
-            <PlaceholderPage
-              title="Team & HR"
-              description="Timesheets, leave, payroll, tasks, and messages"
-              permission="team.view"
-            />
-          }
-        />
-        <Route
-          path="portal/*"
-          element={
-            <PlaceholderPage
-              title="Clinic portal"
-              description="Bookings, calendar, credits, and messages for clinic staff"
-              permission="portal.bookings.view"
-            />
-          }
-        />
+        <Route path="calls/queue" element={<CallQueuePage />} />
+        <Route path="leads" element={<LeadsListPage />} />
+        <Route path="bookings/*" element={<BookingsPage />} />
+        <Route path="clinics/*" element={<ClinicsPage />} />
+        <Route path="training/*" element={<TrainingPage />} />
+        <Route path="team/*" element={<TeamPage />} />
+        <Route path="portal/bookings" element={<PortalBookingsPage />} />
+        <Route path="portal/calendar" element={<PortalCalendarPage />} />
+        <Route path="portal/credits" element={<PortalCreditsPage />} />
+        <Route path="portal/*" element={<PortalBookingsPage />} />
       </Route>
+
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )

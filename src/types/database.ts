@@ -255,29 +255,90 @@ export interface Database {
           country: string
           timezone: string
           is_active: boolean
+          suburb: string | null
+          credit_balance: number
           created_at: string
           updated_at: string
         }
-        Insert: {
-          id?: string
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          id: string
+          first_name: string
+          last_name: string
+          email: string | null
+          phone: string
+          suburb: string | null
+          state: string | null
+          source: string
+          stage: string
+          treatment_interest: string | null
+          funding_type: string | null
+          decision_maker: string | null
+          call_count: number
+          notes: string | null
+          next_callback_at: string | null
+          last_contact_at: string | null
+          created_at: string
+        }
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      communications: {
+        Row: {
+          id: string
+          channel: string
+          direction: string
+          body: string | null
+          transcript_summary: string | null
+          lead_id: string | null
+          created_at: string
+          staff_id: string | null
+        }
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      call_flow_stages: {
+        Row: {
+          id: string
           name: string
-          stage?: string
-          country?: string
-          timezone?: string
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
+          time_range: string | null
+          script_content: string | null
+          sort_order: number
+          is_active: boolean
         }
-        Update: {
-          id?: string
-          name?: string
-          stage?: string
-          country?: string
-          timezone?: string
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      bookings: {
+        Row: Record<string, unknown>
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      practitioners: {
+        Row: Record<string, unknown>
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          id: string
+          event_type: string
+          title: string
+          body: string | null
+          is_read: boolean
+          created_at: string
         }
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
         Relationships: []
       }
     }
@@ -288,6 +349,16 @@ export interface Database {
           user_id: string
           permission_key: string
           allowed: boolean
+        }
+        Relationships: []
+      }
+      dashboard_stats: {
+        Row: {
+          open_leads: number
+          bookings_today: number
+          shows_this_week: number
+          callbacks_due: number
+          open_tasks: number
         }
         Relationships: []
       }
@@ -308,6 +379,38 @@ export interface Database {
       get_my_clinic_ids: {
         Args: Record<string, never>
         Returns: string[]
+      }
+      get_call_queue: {
+        Args: { p_tab_id?: string; p_page?: number; p_page_size?: number }
+        Returns: Record<string, unknown>[]
+      }
+      get_leads_list: {
+        Args: { p_search?: string; p_stage?: string; p_page?: number; p_page_size?: number }
+        Returns: Record<string, unknown>[]
+      }
+      get_suggested_clinics: {
+        Args: { p_lead_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_available_slots: {
+        Args: { p_clinic_id: string; p_date: string; p_practitioner_id?: string }
+        Returns: Record<string, unknown>[]
+      }
+      create_booking: {
+        Args: Record<string, unknown>
+        Returns: string
+      }
+      get_bookings_list: {
+        Args: { p_search?: string; p_page?: number; p_page_size?: number }
+        Returns: Record<string, unknown>[]
+      }
+      get_clinics_list: {
+        Args: { p_stage?: string; p_page?: number; p_page_size?: number }
+        Returns: Record<string, unknown>[]
+      }
+      get_my_notifications: {
+        Args: { p_page?: number; p_page_size?: number }
+        Returns: Record<string, unknown>[]
       }
     }
     Enums: Record<string, never>

@@ -23,15 +23,15 @@ export function Sidebar({ role, collapsed }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden border-r bg-sidebar md:flex md:flex-col',
-        collapsed ? 'w-16' : 'w-64',
+        'hidden border-r border-border/40 bg-sidebar md:flex md:flex-col',
+        collapsed ? 'w-16' : 'w-60',
       )}
     >
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-14 items-center border-b border-border/40 px-4">
         {collapsed ? (
-          <span className="mx-auto text-sm font-bold">MD</span>
+          <span className="mx-auto text-xs font-bold tracking-tight">MD</span>
         ) : (
-          <span className="text-sm font-semibold">Mast Dental Group</span>
+          <span className="text-sm font-semibold tracking-tight">Mast Dental</span>
         )}
       </div>
       <ScrollArea className="flex-1 px-2 py-4">
