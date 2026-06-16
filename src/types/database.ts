@@ -1,0 +1,323 @@
+export type UserRole =
+  | 'super_admin'
+  | 'admin'
+  | 'manager'
+  | 'sales_rep'
+  | 'trainer'
+  | 'clinic_admin'
+  | 'clinic_staff'
+
+export type ThemePreference = 'system' | 'light' | 'dark'
+
+export type SettingValueType =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'json'
+  | 'string_array'
+
+export interface Database {
+  public: {
+    Tables: {
+      staff_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          email: string
+          full_name: string
+          role: UserRole
+          phone: string | null
+          avatar_url: string | null
+          theme_preference: ThemePreference
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          email: string
+          full_name: string
+          role: UserRole
+          phone?: string | null
+          avatar_url?: string | null
+          theme_preference?: ThemePreference
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          email?: string
+          full_name?: string
+          role?: UserRole
+          phone?: string | null
+          avatar_url?: string | null
+          theme_preference?: ThemePreference
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      clinic_memberships: {
+        Row: {
+          id: string
+          staff_profile_id: string
+          clinic_id: string
+          role: UserRole
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          staff_profile_id: string
+          clinic_id: string
+          role: UserRole
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          staff_profile_id?: string
+          clinic_id?: string
+          role?: UserRole
+          created_at?: string
+        }
+        Relationships: []
+      }
+      permission_keys: {
+        Row: {
+          id: string
+          key: string
+          module: string
+          label: string
+          description: string | null
+          is_sensitive: boolean
+          sort_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          module: string
+          label: string
+          description?: string | null
+          is_sensitive?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          module?: string
+          label?: string
+          description?: string | null
+          is_sensitive?: boolean
+          sort_order?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          id: string
+          role: UserRole
+          permission_key: string
+          allowed: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          role: UserRole
+          permission_key: string
+          allowed?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          role?: UserRole
+          permission_key?: string
+          allowed?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_permission_overrides: {
+        Row: {
+          id: string
+          staff_profile_id: string
+          permission_key: string
+          allowed: boolean
+          granted_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          staff_profile_id: string
+          permission_key: string
+          allowed: boolean
+          granted_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          staff_profile_id?: string
+          permission_key?: string
+          allowed?: boolean
+          granted_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          value: unknown
+          value_type: SettingValueType
+          label: string
+          description: string | null
+          category: string
+          is_public: boolean
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          value?: unknown
+          value_type?: SettingValueType
+          label: string
+          description?: string | null
+          category?: string
+          is_public?: boolean
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: unknown
+          value_type?: SettingValueType
+          label?: string
+          description?: string | null
+          category?: string
+          is_public?: boolean
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      activities: {
+        Row: {
+          id: string
+          event_type: string
+          entity_type: string
+          entity_id: string
+          actor_id: string | null
+          payload: Record<string, unknown>
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_type: string
+          entity_type: string
+          entity_id: string
+          actor_id?: string | null
+          payload?: Record<string, unknown>
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_type?: string
+          entity_type?: string
+          entity_id?: string
+          actor_id?: string | null
+          payload?: Record<string, unknown>
+          created_at?: string
+        }
+        Relationships: []
+      }
+      clinics: {
+        Row: {
+          id: string
+          name: string
+          stage: string
+          country: string
+          timezone: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          stage?: string
+          country?: string
+          timezone?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          stage?: string
+          country?: string
+          timezone?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      user_permissions_view: {
+        Row: {
+          staff_profile_id: string
+          user_id: string
+          permission_key: string
+          allowed: boolean
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      has_permission: {
+        Args: { permission_key: string }
+        Returns: boolean
+      }
+      get_my_permissions: {
+        Args: Record<string, never>
+        Returns: { permission_key: string; allowed: boolean }[]
+      }
+      get_my_profile: {
+        Args: Record<string, never>
+        Returns: Database['public']['Tables']['staff_profiles']['Row']
+      }
+      get_my_clinic_ids: {
+        Args: Record<string, never>
+        Returns: string[]
+      }
+    }
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
+  }
+}
+
+export type StaffProfile = Database['public']['Tables']['staff_profiles']['Row']
+export type AppSetting = Database['public']['Tables']['app_settings']['Row']
+export type PermissionKey = Database['public']['Tables']['permission_keys']['Row']
+export type RolePermission = Database['public']['Tables']['role_permissions']['Row']
+export type UserPermissionOverride =
+  Database['public']['Tables']['user_permission_overrides']['Row']
