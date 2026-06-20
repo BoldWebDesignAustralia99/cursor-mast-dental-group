@@ -2,6 +2,7 @@ import { PermissionGate } from '@/components/auth/PermissionGate'
 import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -9,6 +10,7 @@ import {
 } from '@/components/ui/table'
 import { useTasksBoard, useTimesheets, useLeaveRequests, useLeaderboard, useCommunityPosts } from '@/hooks/useTeam'
 import { format } from 'date-fns'
+import { Link } from 'react-router-dom'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -72,6 +74,11 @@ export function TeamPage() {
           </TabsContent>
           <TabsContent value="tasks" className="mt-4">
             <Section title="Open tasks">
+              <div className="mb-3 flex justify-end">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/team/tasks">Open tasks page</Link>
+                </Button>
+              </div>
               {tasksLoading ? <Skeleton className="h-24 rounded-xl" /> : (tasks ?? []).length === 0 ? (
                 <EmptyState title="No open tasks" description="Team tasks and follow-ups will appear here." className="py-6" />
               ) : (

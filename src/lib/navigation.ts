@@ -6,6 +6,7 @@ import {
   ClipboardList,
   GraduationCap,
   LayoutDashboard,
+  ListTodo,
   MessageSquare,
   Phone,
   Settings,
@@ -98,6 +99,12 @@ const internalNav: NavGroup[] = [
         href: '/training',
         icon: GraduationCap,
         permission: 'training.view',
+      },
+      {
+        title: 'Tasks',
+        href: '/team/tasks',
+        icon: ListTodo,
+        permission: 'team.view',
       },
       {
         title: 'Team & HR',
@@ -257,6 +264,7 @@ export const commandSearchItems = [
   { title: 'Routing matrix', href: '/clinics/routing', keywords: ['routing', 'allocation'], permission: 'leads.manage' },
   { title: 'Comms inbox', href: '/clinics/inbox', keywords: ['inbox', 'messages', 'clinic'], permission: 'clinics.comms.view' },
   { title: 'Training', href: '/training', keywords: ['courses', 'scripts'], permission: 'training.view' },
+  { title: 'Tasks', href: '/team/tasks', keywords: ['tasks', 'todo', 'follow-up', 'assignments'], permission: 'team.view' },
   { title: 'Team & HR', href: '/team', keywords: ['payroll', 'hr', 'team'], permission: 'team.view' },
   { title: 'Sales pods', href: '/team/pods', keywords: ['pods', 'teams'], permission: 'team.manage' },
   { title: 'Coaching', href: '/team/coaching', keywords: ['coaching', 'feedback'], permission: 'team.view' },

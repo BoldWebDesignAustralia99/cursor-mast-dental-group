@@ -45,11 +45,12 @@ describe('navigation structure', () => {
     expect(commandSearchItems.some((i) => i.href === '/dashboard')).toBe(true)
   })
 
-  it('internal nav includes workflows for admins', async () => {
+  it('internal nav includes tasks and workflows', async () => {
     const { getNavigationForRole } = await import('@/lib/navigation')
     const nav = getNavigationForRole('admin')
     const allHrefs = nav.flatMap((g) => g.items.map((i) => i.href))
     expect(allHrefs).toContain('/admin/workflows')
+    expect(allHrefs).toContain('/team/tasks')
   })
 
   it('clinic nav includes portal calling', async () => {

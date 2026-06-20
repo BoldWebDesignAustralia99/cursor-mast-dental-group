@@ -111,6 +111,7 @@ export function DashboardPage() {
                 { label: 'Today\'s bookings', href: '/bookings' },
                 { label: 'Clinic CRM', href: '/clinics' },
                 { label: 'Training', href: '/training' },
+                { label: 'Tasks', href: '/team/tasks' },
                 { label: 'Team & HR', href: '/team' },
               ].map((action) => (
                 <Link
@@ -124,21 +125,23 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/40">
-            <CardHeader>
-              <CardTitle className="text-base">Open tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : (
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl font-semibold tabular-nums">{stats?.open_tasks ?? 0}</span>
-                  <Badge variant="secondary">Team & HR</Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <Link to="/team/tasks">
+            <Card className="border-border/40 transition-colors hover:bg-accent/30">
+              <CardHeader>
+                <CardTitle className="text-base">Open tasks</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-24" />
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl font-semibold tabular-nums">{stats?.open_tasks ?? 0}</span>
+                    <Badge variant="secondary">View tasks</Badge>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
     </PermissionGate>
