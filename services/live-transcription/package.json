@@ -1,0 +1,14 @@
+{
+  "name": "live-transcription",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
+    "ws": "^8.18.0"
+  }
+}

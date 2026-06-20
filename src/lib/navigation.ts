@@ -194,6 +194,12 @@ const clinicNav: NavGroup[] = [
         permission: 'portal.messages.view',
         mobileTab: true,
       },
+      {
+        title: 'Calling',
+        href: '/portal/calling',
+        icon: Phone,
+        permission: 'portal.messages.view',
+      },
     ],
   },
 ]

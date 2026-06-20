@@ -30,6 +30,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { LiveCopilotPanel } from '@/components/calls/LiveCopilotPanel'
 import { StageActionPanel } from '@/components/calls/StageActionPanel'
+import { useTwilioCall } from '@/hooks/useTwilioCall'
+import { useLiveTranscript } from '@/hooks/useLiveTranscript'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -159,13 +161,22 @@ export function LeadRecordPage() {
   const [activeStage, setActiveStage] = useState(0)
   const [completedStages, setCompletedStages] = useState<Set<number>>(new Set())
   const [noteText, setNoteText] = useState('')
-  const [muted, setMuted] = useState(false)
-  const [onHold, setOnHold] = useState(false)
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
-  const [copilotOpen, setCopilotOpen] = useState(false)
+  const [copilotOpen, setCopilotOpen] = useState(true)
   const [lockHeld, setLockHeld] = useState(false)
+
+  const call = useTwilioCall({
+    leadId: id,
+    phoneNumber: lead?.phone ?? '',
+  })
+  const transcript = useLiveTranscript(id, call.callLogId, copilotOpen)
+
+  useEffect(() => {
+    if (!lockHeld || !lead?.phone) return
+    void call.connect()
+  }, [lockHeld, lead?.phone])
 
   const releaseAndNavigate = useCallback(
     async (path: string, reason: string) => {
@@ -328,22 +339,22 @@ export function LeadRecordPage() {
             <Button
               variant="outline"
               size="sm"
-              className={cn('h-9 gap-2', muted && 'bg-accent')}
-              onClick={() => setMuted(!muted)}
+              className={cn('h-9 gap-2', call.muted && 'bg-accent')}
+              onClick={() => call.toggleMute()}
             >
-              {muted ? <MicOff className="size-3.5" /> : <Mic className="size-3.5" />}
+              {call.muted ? <MicOff className="size-3.5" /> : <Mic className="size-3.5" />}
               Mute
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className={cn('h-9 gap-2', onHold && 'bg-accent')}
-              onClick={() => setOnHold(!onHold)}
+              className={cn('h-9 gap-2', call.onHold && 'bg-accent')}
+              onClick={() => call.toggleHold()}
             >
               <Pause className="size-3.5" />
               Hold
             </Button>
-            <Button variant="destructive" size="sm" className="h-9 gap-2">
+            <Button variant="destructive" size="sm" className="h-9 gap-2" onClick={() => call.hangUp()}>
               <PhoneOff className="size-3.5" />
               End call
             </Button>
@@ -525,7 +536,13 @@ export function LeadRecordPage() {
           </aside>
         </div>
       </div>
-      <LiveCopilotPanel open={copilotOpen} onClose={() => setCopilotOpen(false)} />
+      <LiveCopilotPanel
+        open={copilotOpen}
+        onClose={() => setCopilotOpen(false)}
+        lines={transcript.lines}
+        connected={transcript.connected}
+        isLive={call.isLive}
+      />
     </div>
   )
 }

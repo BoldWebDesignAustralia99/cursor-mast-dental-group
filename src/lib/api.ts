@@ -35,4 +35,8 @@ export const api = {
     invokeFunction<{ configured: boolean; token?: string; message?: string }>('twilio-token', { identity }),
   processJobs: (batch = 10) =>
     invokeFunction<{ processed: number }>(`process-jobs?batch=${batch}`, {}),
+  executeAutomation: (payload: { run_id: string; automation_id: string; payload?: Record<string, unknown> }) =>
+    invokeFunction('execute-automation', payload),
+  geocodeAddress: (query: string) =>
+    invokeFunction<{ lat: number; lng: number; place_name: string } | { configured: false }>('mapbox-geocode', { query }),
 }

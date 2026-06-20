@@ -24,7 +24,9 @@ import {
   PortalCreditsPage,
   PortalCalendarPage,
   PortalMessagesPage,
+  PortalCallingPage,
 } from '@/pages/portal/PortalPages'
+import { OnlineBookingPage } from '@/pages/booking/OnlineBookingPage'
 import { isSupabaseConfigured } from '@/lib/demo'
 
 function AuthRedirect({ children }: { children: React.ReactNode }) {
@@ -46,6 +48,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
+      <Route path="/book/:slug" element={<OnlineBookingPage />} />
 
       <Route
         path="/leads/:id"
@@ -80,6 +83,7 @@ function AppRoutes() {
         <Route path="portal/calendar" element={<PortalCalendarPage />} />
         <Route path="portal/credits" element={<PortalCreditsPage />} />
         <Route path="portal/messages" element={<PortalMessagesPage />} />
+        <Route path="portal/calling" element={<PortalCallingPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

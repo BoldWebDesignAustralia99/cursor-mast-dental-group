@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
+import { Phone, MessageSquare } from 'lucide-react'
+import { toast } from 'sonner'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { PageHeader } from '@/components/shared/PageStates'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
-import { usePortalBookings, usePortalCredits, usePractitionerSchedule } from '@/hooks/usePortal'
+import { usePortalBookings, usePortalCredits, usePractitionerSchedule, useClinicPatientComms, useClinicCallingNumbers } from '@/hooks/usePortal'
 
 export function PortalBookingsPage() {
   const { data: bookings, isLoading } = usePortalBookings()
@@ -136,18 +138,97 @@ export function PortalCalendarPage() {
 }
 
 export function PortalMessagesPage() {
+  const { data: comms, isLoading } = useClinicPatientComms()
+
   return (
     <PermissionGate permission="portal.messages.view">
       <div className="space-y-6">
-        <PageHeader title="Messages" description="Communicate with the Mast Dental team" />
-        <Card className="border-border/40">
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Clinic messaging threads connect here. SMS and email history with your account manager appears in this inbox.
-          </CardContent>
-        </Card>
+        <PageHeader title="Messages" description="SMS and email with patients — no call recordings shown" />
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : (
+          <div className="space-y-2">
+            {(comms ?? []).map((c: { id: string; channel: string; direction: string; body: string; created_at: string }) => (
+              <Card key={c.id} className="border-border/40">
+                <CardContent className="flex items-start gap-3 p-4">
+                  <MessageSquare className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{c.channel}</Badge>
+                      <span className="text-xs text-muted-foreground">{c.direction}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {format(new Date(c.created_at), 'd MMM, h:mm a')}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm">{c.body}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {(comms ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">No patient messages yet.</p>
+            )}
+          </div>
+        )}
         <Button asChild variant="outline">
           <Link to="/clinics/inbox">Open team inbox (internal)</Link>
         </Button>
+      </div>
+    </PermissionGate>
+  )
+}
+
+export function PortalCallingPage() {
+  const { data: numbers, isLoading } = useClinicCallingNumbers()
+
+  const handleCall = (phone: string) => {
+    toast.message(`Outbound call to ${phone}`, {
+      description: 'Configure Twilio clinic portal credentials for live dialing.',
+    })
+  }
+
+  const handleSms = (phone: string) => {
+    toast.message(`SMS to ${phone}`, {
+      description: 'Messages route through the automation engine.',
+    })
+  }
+
+  return (
+    <PermissionGate permission="portal.messages.view">
+      <div className="space-y-6">
+        <PageHeader title="Patient calling" description="Outbound calls and SMS from your clinic number" />
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : (
+          <Card className="border-border/40">
+            <CardHeader>
+              <CardTitle className="text-base">Your numbers</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(numbers ?? []).map((n: { id: string; phone_number: string; region: string }) => (
+                <div key={n.id} className="flex items-center justify-between rounded-lg border border-border/40 p-4">
+                  <div>
+                    <p className="font-mono text-sm">{n.phone_number}</p>
+                    <p className="text-xs text-muted-foreground">{n.region}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="gap-2" onClick={() => handleCall(n.phone_number)}>
+                      <Phone className="size-3.5" />
+                      Call patient
+                    </Button>
+                    <Button size="sm" variant="outline" className="gap-2" onClick={() => handleSms(n.phone_number)}>
+                      <MessageSquare className="size-3.5" />
+                      SMS
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {(numbers ?? []).length === 0 && (
+                <p className="text-sm text-muted-foreground">No calling numbers assigned yet.</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PermissionGate>
   )

@@ -69,3 +69,40 @@ export function useMarkNotificationsRead() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
 }
+
+export function useClinicPatientComms(clinicId?: string) {
+  return useQuery({
+    queryKey: ['clinic-patient-comms', clinicId],
+    queryFn: async () => {
+      if (isDemoModeEnabled()) {
+        return [
+          { id: '1', channel: 'sms', direction: 'outbound', body: 'Hi Raewyn, your consult is confirmed for Tue 10am.', created_at: new Date().toISOString() },
+        ]
+      }
+      let cid = clinicId
+      if (!cid) {
+        const { data: clinic } = await db.from('clinics').select('id').limit(1).single()
+        cid = clinic?.id
+      }
+      const { data, error } = await (supabase as any).rpc('get_clinic_patient_comms', { p_clinic_id: cid })
+      if (error) throw error
+      return (data ?? []) as unknown as { id: string; channel: string; direction: string; body: string; created_at: string }[]
+    },
+  })
+}
+
+export function useClinicCallingNumbers(clinicId?: string) {
+  return useQuery({
+    queryKey: ['clinic-calling-numbers', clinicId],
+    queryFn: async () => {
+      if (isDemoModeEnabled()) {
+        return [{ id: '1', phone_number: '+61730000001', region: 'AU' }]
+      }
+      let q = db.from('clinic_calling_numbers').select('id, phone_number, region, clinic_id').eq('is_active', true)
+      if (clinicId) q = q.eq('clinic_id', clinicId)
+      const { data, error } = await q
+      if (error) throw error
+      return (data ?? []) as { id: string; phone_number: string; region: string }[]
+    },
+  })
+}

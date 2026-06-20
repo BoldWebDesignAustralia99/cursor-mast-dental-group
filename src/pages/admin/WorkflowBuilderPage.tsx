@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWorkflows, useWorkflowSteps, useWorkflowRuns, useUpdateWorkflowStatus } from '@/hooks/useWorkflows'
+import { WorkflowCanvas } from '@/components/workflows/WorkflowCanvas'
 
 export function WorkflowBuilderPage() {
   const { data: workflows, isLoading } = useWorkflows()
@@ -80,25 +81,22 @@ export function WorkflowBuilderPage() {
                       <TabsTrigger value="builder">Builder</TabsTrigger>
                       <TabsTrigger value="runs">Runs</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="builder" className="mt-4 space-y-3">
-                      {(steps ?? []).map((s) => (
-                        <Card key={s.id} className="border-border/40">
-                          <CardContent className="p-4">
-                            <div className="mb-2 flex items-center gap-2">
-                              <span className="flex size-6 items-center justify-center rounded-full bg-muted text-xs">{s.step_order}</span>
-                              <Badge variant="secondary">{s.step_type}</Badge>
-                            </div>
-                            {s.template_body && (
-                              <p className="rounded-lg bg-muted/30 p-3 text-sm">{s.template_body}</p>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                      <Card className="border-dashed border-border/40">
-                        <CardContent className="p-4 text-center text-sm text-muted-foreground">
-                          End of workflow
-                        </CardContent>
-                      </Card>
+                    <TabsContent value="builder" className="mt-4">
+                      {workflows?.find((w) => w.id === activeId) && (
+                        <WorkflowCanvas
+                          triggerType={workflows.find((w) => w.id === activeId)!.trigger_type}
+                          steps={(steps ?? []).map((s) => ({
+                            id: s.id,
+                            step_order: s.step_order,
+                            step_type: s.step_type,
+                            template_body: s.template_body,
+                          }))}
+                          status={workflows.find((w) => w.id === activeId)!.status}
+                        />
+                      )}
+                      {(steps ?? []).length === 0 && (
+                        <p className="text-sm text-muted-foreground">No steps configured yet.</p>
+                      )}
                     </TabsContent>
                     <TabsContent value="runs" className="mt-4 space-y-2">
                       {(runs ?? []).length === 0 ? (
