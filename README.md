@@ -42,7 +42,10 @@ Open **http://localhost:5173** → Login → **Continue to demo**.
 
 ### Built — UI + database + Edge Functions
 
-- **Auth & permissions** — 7 roles, RLS, permission matrix, user overrides
+- **Start Work + lead locking** — one-click allocation (`start_work` RPC), heartbeat locks, no queue browsing for reps
+- **Dual queues** — frontline + reactivation pools with separate pods
+- **Call Screen** — 7-stage framework, mouth map, finance check, deposit, booking; Dark Command Center theme
+- **Job queue + domain events** — durable async backbone for workflows/comms at scale
 - **Settings** — all business rules in `app_settings` table
 - **Sales lead page** — focused 3-column call view with copilot panel
 - **Call queue & leads** — paginated RPCs, callbacks priority
@@ -74,12 +77,24 @@ Data migration from existing production DB, two-week parallel run — not applic
 
 ## Supabase
 
+**Project:** Mast Dental Platform USA (`dqgbtujrnzmzvqijncsj`) · Region: `us-east-1`
+
 ```bash
+# Copy .env.example and add your publishable key from Supabase dashboard
+cp .env.example .env.local
+
+npx supabase link --project-ref dqgbtujrnzmzvqijncsj
 npx supabase db push
 npx supabase functions deploy
 ```
 
 Set secrets: `ANTHROPIC_API_KEY`, `STRIPE_SECRET_KEY`, `TWILIO_*`, `GOCARDLESS_*`, etc.
+
+### Schema (62 tables)
+
+Foundation migrations + **Start Work / lead locking / sales pods / job queue / domain events** (migration `20250620000008`).
+
+Key RPCs: `start_work`, `acquire_lead_lock`, `heartbeat_lead_lock`, `release_lead_lock`, `enqueue_job`, `emit_domain_event`.
 
 ---
 

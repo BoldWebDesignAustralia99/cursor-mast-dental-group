@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Sparkles, MoreHorizontal, ArrowRight, LogOut } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   format,
@@ -29,6 +29,14 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { LiveCopilotPanel } from '@/components/calls/LiveCopilotPanel'
+import { StageActionPanel } from '@/components/calls/StageActionPanel'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useLeadLock } from '@/hooks/useStartWork'
 import {
   useLead,
   useCallFlowStages,
@@ -146,15 +154,48 @@ export function LeadRecordPage() {
   const { data: clinics } = useSuggestedClinics(id)
   const addNote = useAddLeadNote()
   const createBooking = useCreateBooking()
+  const leadLock = useLeadLock(id)
 
-  const [activeStage, setActiveStage] = useState(5)
+  const [activeStage, setActiveStage] = useState(0)
+  const [completedStages, setCompletedStages] = useState<Set<number>>(new Set())
   const [noteText, setNoteText] = useState('')
   const [muted, setMuted] = useState(false)
   const [onHold, setOnHold] = useState(false)
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState(new Date(2026, 5, 17))
+  const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [copilotOpen, setCopilotOpen] = useState(false)
+  const [lockHeld, setLockHeld] = useState(false)
+
+  const releaseAndNavigate = useCallback(
+    async (path: string, reason: string) => {
+      if (lockHeld) await leadLock.release(reason)
+      navigate(path)
+    },
+    [leadLock, lockHeld, navigate],
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    void leadLock.acquire().then((ok) => {
+      if (!cancelled) {
+        setLockHeld(ok)
+        if (!ok) toast.error('Another rep is working this lead')
+      }
+    })
+    return () => {
+      cancelled = true
+      void leadLock.release('page_close')
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (!lockHeld) return
+    const interval = setInterval(() => {
+      void leadLock.heartbeat()
+    }, 60_000)
+    return () => clearInterval(interval)
+  }, [lockHeld, leadLock])
 
   const defaultClinicId = clinics?.find((c) => c.is_recommended)?.clinic_id ?? clinics?.[0]?.clinic_id ?? ''
   const clinicId = selectedClinicId ?? defaultClinicId
@@ -187,11 +228,21 @@ export function LeadRecordPage() {
         scheduledStart: selectedSlot,
         scheduledEnd: new Date(new Date(selectedSlot).getTime() + 60 * 60_000).toISOString(),
       })
-      .then(() => {
+      .then(async () => {
         toast.success('Appointment booked')
+        await leadLock.release('booked')
         navigate('/bookings')
       })
       .catch(() => toast.error('Could not book appointment'))
+  }
+
+  const advanceStage = () => {
+    setCompletedStages((prev) => new Set(prev).add(activeStage))
+    setActiveStage((s) => Math.min(s + 1, (stages?.length ?? 1) - 1))
+  }
+
+  const jumpToStage = (index: number) => {
+    setActiveStage(index)
   }
 
   if (isLoading || !lead) {
@@ -231,6 +282,40 @@ export function LeadRecordPage() {
           <CallTimer targetMinutes={30} />
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-2"
+              onClick={() => void releaseAndNavigate('/dashboard', 'next_lead').then(() => {
+                // parent will use Start Work again
+              })}
+            >
+              <ArrowRight className="size-3.5" />
+              Next lead
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 gap-2"
+              onClick={() => void releaseAndNavigate('/dashboard', 'leave')}
+            >
+              <LogOut className="size-3.5" />
+              Leave
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-9">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {stages?.map((stage, i) => (
+                  <DropdownMenuItem key={stage.id} onClick={() => jumpToStage(i)}>
+                    Jump to {stage.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="outline"
               size="sm"
@@ -289,14 +374,14 @@ export function LeadRecordPage() {
                         <span
                           className={cn(
                             'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-medium',
-                            i === activeStage
-                              ? 'bg-foreground text-background'
-                              : i < activeStage
-                                ? 'bg-foreground/20 text-foreground'
+                            completedStages.has(i)
+                              ? 'bg-accent-emerald text-accent-emerald-foreground'
+                              : i === activeStage
+                                ? 'bg-foreground text-background'
                                 : 'bg-muted text-muted-foreground',
                           )}
                         >
-                          {i + 1}
+                          {completedStages.has(i) ? '✓' : i + 1}
                         </span>
                         <div className="min-w-0">
                           <p className="text-sm font-medium leading-tight">{stage.name}</p>
@@ -362,9 +447,9 @@ export function LeadRecordPage() {
                       variant="outline"
                       size="sm"
                       disabled={activeStage >= (stages?.length ?? 1) - 1}
-                      onClick={() => setActiveStage((s) => Math.min(s + 1, (stages?.length ?? 1) - 1))}
+                      onClick={advanceStage}
                     >
-                      Next
+                      Next stage
                     </Button>
                     <div className="flex gap-1">
                       {stages?.map((_, i) => (
@@ -418,100 +503,24 @@ export function LeadRecordPage() {
             </div>
           </main>
 
-          {/* Right: clinic + calendar + slots */}
+          {/* Right: stage-specific action panel */}
           <aside className="flex min-w-0 flex-col overflow-auto">
-            <div className="p-4 space-y-5">
-              <div>
-                <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Choose clinic
-                </p>
-                <div className="space-y-2">
-                  {clinics?.map((clinic) => (
-                    <Button
-                      key={clinic.clinic_id}
-                      type="button"
-                      variant="outline"
-                      onClick={() => setSelectedClinicId(clinic.clinic_id)}
-                      className={cn(
-                        'h-auto w-full flex-col items-start rounded-lg p-3 text-left font-normal',
-                        selectedClinicId === clinic.clinic_id || (!selectedClinicId && clinic.is_recommended)
-                          ? 'border-primary/30 bg-accent/50 ring-1 ring-primary/10'
-                          : 'border-border/40',
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-medium">{clinic.clinic_name}</p>
-                          <p className="text-xs text-muted-foreground tabular-nums">
-                            {clinic.distance_km} km · {clinic.drive_time_min} min drive
-                          </p>
-                        </div>
-                        {clinic.is_recommended && (
-                          <Badge className="shrink-0 bg-foreground text-background hover:bg-foreground/90">
-                            Rec
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {clinic.has_senior && (
-                          <Badge variant="success" className="text-[10px]">Senior on site</Badge>
-                        )}
-                        {clinic.senior_visiting && (
-                          <Badge variant="warning" className="text-[10px]">Senior visiting</Badge>
-                        )}
-                        {!clinic.has_senior && !clinic.senior_visiting && (
-                          <Badge variant="error" className="text-[10px]">No senior</Badge>
-                        )}
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Choose a day
-                </p>
-                <MiniCalendar selected={selectedDate} onSelect={setSelectedDate} />
-              </div>
-
-              <div>
-                <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Pick a time
-                </p>
-                <div className="space-y-1.5">
-                  {slots?.map((slot) => (
-                    <Button
-                      key={slot.slot_start}
-                      type="button"
-                      variant="outline"
-                      onClick={() => setSelectedSlot(slot.slot_start)}
-                      className={cn(
-                        'h-auto w-full justify-between rounded-lg px-3 py-2 font-normal',
-                        selectedSlot === slot.slot_start
-                          ? 'border-primary/30 bg-accent/50'
-                          : 'border-border/40',
-                      )}
-                    >
-                      <span className="text-sm font-medium tabular-nums">{slot.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{slot.practitioner_name}</span>
-                        {slot.is_senior && (
-                          <Badge variant="success" className="text-[10px]">Senior</Badge>
-                        )}
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <Button
-                className="w-full"
-                disabled={!selectedSlot || createBooking.isPending}
-                onClick={handleBook}
-              >
-                Book appointment
-              </Button>
+            <div className="p-4">
+              <StageActionPanel
+                stageName={currentStage?.name ?? ''}
+                clinics={clinics}
+                slots={slots}
+                selectedClinicId={selectedClinicId ?? defaultClinicId}
+                selectedSlot={selectedSlot}
+                selectedDate={selectedDate}
+                onSelectClinic={setSelectedClinicId}
+                onSelectSlot={setSelectedSlot}
+                onBook={handleBook}
+                bookingPending={createBooking.isPending}
+                calendar={
+                  <MiniCalendar selected={selectedDate} onSelect={setSelectedDate} />
+                }
+              />
             </div>
           </aside>
         </div>

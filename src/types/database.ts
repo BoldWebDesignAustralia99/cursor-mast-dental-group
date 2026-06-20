@@ -412,6 +412,22 @@ export interface Database {
         Args: { p_page?: number; p_page_size?: number }
         Returns: Record<string, unknown>[]
       }
+      start_work: {
+        Args: { p_queue_type?: 'frontline' | 'reactivation' }
+        Returns: { lead_id: string | null; lock_acquired: boolean; allocation_reason: string }[]
+      }
+      acquire_lead_lock: {
+        Args: { p_lead_id: string; p_queue_type?: 'frontline' | 'reactivation' }
+        Returns: boolean
+      }
+      heartbeat_lead_lock: {
+        Args: { p_lead_id: string }
+        Returns: boolean
+      }
+      release_lead_lock: {
+        Args: { p_lead_id: string; p_reason?: string }
+        Returns: boolean
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

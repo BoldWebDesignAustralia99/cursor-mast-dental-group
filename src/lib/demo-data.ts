@@ -18,19 +18,13 @@ export const DEMO_LEAD = {
 }
 
 export const DEMO_CALL_FLOW = [
-  { id: '1', name: 'Open', time_range: '0–2 min', sort_order: 1 },
-  { id: '2', name: 'Discover', time_range: '2–10 min', sort_order: 2 },
-  { id: '3', name: 'Map the mouth', time_range: 'Live throughout', sort_order: 3 },
-  { id: '4', name: 'Educate', time_range: '10–18 min', sort_order: 4 },
-  { id: '5', name: 'Match clinic', time_range: '18–24 min', sort_order: 5 },
-  {
-    id: '6',
-    name: 'Close, take deposit & book',
-    time_range: '24–30 min',
-    script_content:
-      "STACK THE VALUE OF THE CONSULT: At the consult we do a cone-beam 3D scan, an OPG, a smile design and colour-match — and we show you a preview of your new smile on screen. That's normally $395.",
-    sort_order: 6,
-  },
+  { id: '1', name: 'Open', time_range: '0–2 min', sort_order: 1, script_content: 'Hi {{first_name}}, this is {{rep_name}} from Mast Dental Group. You recently enquired about dental implants — is now a good time to chat?' },
+  { id: '2', name: 'Discovery', time_range: '2–10 min', sort_order: 2, script_content: 'Tell me what\'s been going on with your teeth and what you\'re hoping to achieve.' },
+  { id: '3', name: 'Educate', time_range: '10–18 min', sort_order: 3, script_content: 'At the consult we do a cone-beam 3D scan, OPG, smile design, and colour match — and show you a preview on screen. That\'s normally $395.' },
+  { id: '4', name: 'Finance Check', time_range: '18–22 min', sort_order: 4, script_content: 'Let\'s check eligibility: household income, any bankruptcies or debt agreements, and citizenship status.' },
+  { id: '5', name: 'Sell the Dentist', time_range: '22–26 min', sort_order: 5, script_content: 'Dr Evelyn Chin is a specialist in implant dentistry with years of experience in All-on-X cases.' },
+  { id: '6', name: 'Take Deposit', time_range: '26–28 min', sort_order: 6, script_content: 'To secure your consult we take a $75 holding deposit. I can take payment now or send you a secure link via SMS.' },
+  { id: '7', name: 'Book', time_range: '28–30 min', sort_order: 7, script_content: 'Let me find the nearest clinic to {{suburb}} and get you booked in with the best available dentist.' },
 ]
 
 export const DEMO_NOTES = [
