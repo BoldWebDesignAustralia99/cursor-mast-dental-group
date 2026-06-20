@@ -30,11 +30,12 @@ describe('navigation', () => {
     expect(hrefs).not.toContain('/calls/queue')
   })
 
-  it('returns internal nav for sales rep', () => {
+  it('hides queue browse from sales rep (Start Work only)', () => {
     const nav = getNavigationForRole('sales_rep')
     const hrefs = nav.flatMap((g) => g.items.map((i) => i.href))
-    expect(hrefs).toContain('/calls/queue')
-    expect(hrefs).toContain('/leads')
+    expect(hrefs).toContain('/dashboard')
+    expect(hrefs).not.toContain('/calls/queue')
+    expect(hrefs).not.toContain('/leads')
   })
 
   it('limits mobile tabs to four items', () => {
@@ -63,8 +64,8 @@ describe('permission acceptance criteria', () => {
   it('documents required integration test matrix', () => {
     const matrix = {
       sales_rep: {
-        allowed: ['leads.view', 'calls.queue.view', 'bookings.create'],
-        denied: ['permissions.manage', 'settings.edit', 'payroll.view'],
+        allowed: ['dashboard.view', 'calls.make', 'bookings.create'],
+        denied: ['permissions.manage', 'settings.edit', 'payroll.view', 'leads.manage'],
       },
       clinic_staff: {
         allowed: ['portal.bookings.view', 'portal.calendar.manage'],

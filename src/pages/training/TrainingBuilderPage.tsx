@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useCallGradesQueue } from '@/hooks/useCopilot'
 
 const STAGE_TYPES = ['course', 'quiz', 'script_drill', 'ai_practice_call', 'call_review']
 
@@ -50,20 +52,37 @@ export function TrainingBuilderPage() {
 }
 
 export function GradingReviewPage() {
+  const { data: grades, isLoading } = useCallGradesQueue()
+
   return (
     <PermissionGate permission="team.manage">
       <div className="space-y-6">
         <PageHeader title="Grading review queue" description="Disputed and flagged call grades" />
-        <Card className="border-border/40">
-          <CardContent className="p-4">
-            <p className="font-medium text-sm">Call with Raewyn Mitchell</p>
-            <p className="text-sm text-muted-foreground">Score: 72 · Rep disputed discovery score</p>
-            <div className="mt-3 flex gap-2">
-              <Button size="sm">Approve grade</Button>
-              <Button size="sm" variant="outline">Adjust score</Button>
-            </div>
-          </CardContent>
-        </Card>
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : (
+          <div className="space-y-2">
+            {(grades ?? []).map((g) => (
+              <Card key={g.id} className="border-border/40">
+                <CardContent className="p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="font-medium text-sm">{g.staff_name}</p>
+                    <Badge variant={g.status === 'disputed' ? 'error' : 'secondary'}>{g.status}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Score: {g.score ?? '—'}</p>
+                  {g.feedback && <p className="mt-2 text-sm">{g.feedback}</p>}
+                  <div className="mt-3 flex gap-2">
+                    <Button size="sm">Approve grade</Button>
+                    <Button size="sm" variant="outline">Adjust score</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {(grades ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">No grades pending review.</p>
+            )}
+          </div>
+        )}
       </div>
     </PermissionGate>
   )

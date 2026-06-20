@@ -24,7 +24,7 @@ export function LeadsListPage() {
   const totalPages = Math.ceil((data?.total ?? 0) / PAGE_SIZE)
 
   return (
-    <PermissionGate permission="leads.view">
+    <PermissionGate permission="leads.manage">
       <div className="space-y-6">
         <PageHeader
           title="Leads"

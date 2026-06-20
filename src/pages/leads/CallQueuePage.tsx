@@ -24,7 +24,7 @@ export function CallQueuePage() {
   const { data, isLoading } = useCallQueue(page)
 
   return (
-    <PermissionGate permission="calls.queue.view">
+    <PermissionGate permission="leads.manage">
       <div className="space-y-6">
         <PageHeader
           title="Call queue"

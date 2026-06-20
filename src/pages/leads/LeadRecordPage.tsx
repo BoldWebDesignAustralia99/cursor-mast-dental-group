@@ -32,6 +32,10 @@ import { LiveCopilotPanel } from '@/components/calls/LiveCopilotPanel'
 import { StageActionPanel } from '@/components/calls/StageActionPanel'
 import { useTwilioCall } from '@/hooks/useTwilioCall'
 import { useLiveTranscript } from '@/hooks/useLiveTranscript'
+import { useCopilotCues } from '@/hooks/useCopilot'
+import { supabase } from '@/lib/supabase'
+import { api } from '@/lib/api'
+import { isDemoModeEnabled } from '@/lib/demo'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -172,6 +176,15 @@ export function LeadRecordPage() {
     phoneNumber: lead?.phone ?? '',
   })
   const transcript = useLiveTranscript(id, call.callLogId, copilotOpen)
+  const { data: cues, isLoading: cuesLoading } = useCopilotCues(transcript.lines)
+  const [accessDenied, setAccessDenied] = useState(false)
+
+  useEffect(() => {
+    if (isDemoModeEnabled()) return
+    void (supabase as any).rpc('can_access_lead', { p_lead_id: id }).then(({ data, error }: { data: boolean; error: Error | null }) => {
+      if (error || data === false) setAccessDenied(true)
+    })
+  }, [id])
 
   useEffect(() => {
     if (!lockHeld || !lead?.phone) return
@@ -254,6 +267,28 @@ export function LeadRecordPage() {
 
   const jumpToStage = (index: number) => {
     setActiveStage(index)
+  }
+
+  const handleEndCall = () => {
+    const transcriptText = transcript.lines.map((l) => `${l.speaker}: ${l.text}`).join('\n')
+    call.hangUp()
+    if (call.callLogId && transcriptText) {
+      void (supabase as any).rpc('end_call_log', {
+        p_call_log_id: call.callLogId,
+        p_transcript: transcriptText,
+      })
+      void api.aiCallNotes(call.callLogId, transcriptText).catch(() => {
+        /* demo / missing AI key */
+      })
+    }
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">This lead is not in your pod. Use Start Work from the dashboard.</p>
+      </div>
+    )
   }
 
   if (isLoading || !lead) {
@@ -354,7 +389,7 @@ export function LeadRecordPage() {
               <Pause className="size-3.5" />
               Hold
             </Button>
-            <Button variant="destructive" size="sm" className="h-9 gap-2" onClick={() => call.hangUp()}>
+            <Button variant="destructive" size="sm" className="h-9 gap-2" onClick={handleEndCall}>
               <PhoneOff className="size-3.5" />
               End call
             </Button>
@@ -540,6 +575,8 @@ export function LeadRecordPage() {
         open={copilotOpen}
         onClose={() => setCopilotOpen(false)}
         lines={transcript.lines}
+        cues={cues ?? []}
+        cuesLoading={cuesLoading}
         connected={transcript.connected}
         isLive={call.isLive}
       />

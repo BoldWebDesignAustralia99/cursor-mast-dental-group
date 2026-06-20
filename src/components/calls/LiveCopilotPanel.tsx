@@ -3,12 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import type { TranscriptLine } from '@/hooks/useLiveTranscript'
-
-const CUE_CARDS = [
-  { title: 'Superannuation objection', content: 'Many patients use super for implants — I can explain the process.' },
-  { title: 'Pain concern', content: 'Sedation options available — most patients report minimal discomfort.' },
-  { title: 'Price anchor', content: 'Free consult includes 3D scan and written treatment plan — no obligation.' },
-]
+import type { CopilotCue } from '@/hooks/useCopilot'
 
 function speakerLabel(speaker: string) {
   if (speaker === 'rep' || speaker === 'agent') return 'You'
@@ -20,11 +15,13 @@ interface LiveCopilotPanelProps {
   open: boolean
   onClose: () => void
   lines: TranscriptLine[]
+  cues: CopilotCue[]
+  cuesLoading?: boolean
   connected?: boolean
   isLive?: boolean
 }
 
-export function LiveCopilotPanel({ open, onClose, lines, connected, isLive }: LiveCopilotPanelProps) {
+export function LiveCopilotPanel({ open, onClose, lines, cues, cuesLoading, connected, isLive }: LiveCopilotPanelProps) {
   if (!open) return null
 
   return (
@@ -62,14 +59,20 @@ export function LiveCopilotPanel({ open, onClose, lines, connected, isLive }: Li
           </Card>
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Cue cards</p>
-            {CUE_CARDS.map((cue) => (
-              <Card key={cue.title} className="mb-2 border-border/40">
-                <CardContent className="p-3">
-                  <p className="text-sm font-medium">{cue.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{cue.content}</p>
-                </CardContent>
-              </Card>
-            ))}
+            {cuesLoading ? (
+              <p className="text-sm text-muted-foreground">Matching cues…</p>
+            ) : cues.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Cue cards appear as keywords are detected in the conversation.</p>
+            ) : (
+              cues.map((cue) => (
+                <Card key={cue.id} className="mb-2 border-border/40">
+                  <CardContent className="p-3">
+                    <p className="text-sm font-medium">{cue.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{cue.content}</p>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </ScrollArea>

@@ -10,7 +10,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useClinicsList } from '@/hooks/useDashboard'
 import { useClinicTimeline, useClinicOnboarding, useClinicLedger } from '@/hooks/useBookings'
 import { api } from '@/lib/api'
+import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 export function ClinicDetailPage() {
@@ -21,6 +23,26 @@ export function ClinicDetailPage() {
   const { data: onboarding } = useClinicOnboarding(clinic?.id)
   const { data: ledger } = useClinicLedger(clinic?.id)
   const [draft, setDraft] = useState('')
+
+  const { data: pmsLog } = useQuery({
+    queryKey: ['pms-sync', clinic?.id],
+    enabled: Boolean(clinic?.id),
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('pms_sync_log')
+        .select('id, direction, action, status, created_at')
+        .eq('clinic_id', clinic!.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      if (error) throw error
+      return data as { id: string; direction: string; action: string; status: string; created_at: string }[]
+    },
+  })
+
+  const handlePmsSync = () => {
+    if (!clinic?.id) return
+    void api.syncPms(clinic.id).then(() => toast.success('PMS sync queued')).catch(() => toast.error('PMS sync failed'))
+  }
 
   const handleDraftReply = async () => {
     try {
@@ -49,6 +71,7 @@ export function ClinicDetailPage() {
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
               <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
               <TabsTrigger value="billing">Billing</TabsTrigger>
+              <TabsTrigger value="pms">PMS sync</TabsTrigger>
             </TabsList>
             <TabsContent value="timeline" className="mt-4 space-y-2">
               {tlLoading ? <Skeleton className="h-24" /> : (
@@ -81,6 +104,18 @@ export function ClinicDetailPage() {
                   <span className="text-muted-foreground tabular-nums">Balance: {entry.balance_after}</span>
                 </div>
               ))}
+            </TabsContent>
+            <TabsContent value="pms" className="mt-4 space-y-2">
+              <Button size="sm" variant="outline" onClick={handlePmsSync}>Sync with Praktika</Button>
+              {(pmsLog ?? []).map((entry) => (
+                <div key={entry.id} className="flex justify-between rounded-lg border border-border/40 p-3 text-sm">
+                  <span>{entry.direction} · {entry.action}</span>
+                  <Badge variant="secondary">{entry.status}</Badge>
+                </div>
+              ))}
+              {(pmsLog ?? []).length === 0 && (
+                <p className="text-sm text-muted-foreground">No PMS sync events yet.</p>
+              )}
             </TabsContent>
           </Tabs>
         </div>

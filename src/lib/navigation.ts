@@ -104,6 +104,18 @@ const internalNav: NavGroup[] = [
         icon: ClipboardList,
         permission: 'team.view',
       },
+      {
+        title: 'Sales pods',
+        href: '/team/pods',
+        icon: Users,
+        permission: 'team.manage',
+      },
+      {
+        title: 'Coaching',
+        href: '/team/coaching',
+        icon: GraduationCap,
+        permission: 'team.view',
+      },
     ],
   },
   {
@@ -208,6 +220,18 @@ export function getNavigationForRole(role: UserRole): NavGroup[] {
   if (role === 'clinic_admin' || role === 'clinic_staff') {
     return clinicNav
   }
+
+  if (role === 'sales_rep') {
+    return internalNav
+      .map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) => item.href !== '/calls/queue' && item.href !== '/leads',
+        ),
+      }))
+      .filter((group) => group.items.length > 0)
+  }
+
   return internalNav
 }
 

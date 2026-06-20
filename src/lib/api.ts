@@ -39,4 +39,10 @@ export const api = {
     invokeFunction('execute-automation', payload),
   geocodeAddress: (query: string) =>
     invokeFunction<{ lat: number; lng: number; place_name: string } | { configured: false }>('mapbox-geocode', { query }),
+  syncPms: (clinicId: string) =>
+    invokeFunction<{ ok: boolean }>('sync-pms', { clinic_id: clinicId }),
+  xeroPushPayroll: (payrollRunId: string) =>
+    invokeFunction<{ ok: boolean }>('xero-push-payroll', { payroll_run_id: payrollRunId }),
+  elevenLabsPracticeCall: (script: string) =>
+    invokeFunction<{ audio_url?: string; configured?: boolean }>('elevenlabs-practice-call', { script }),
 }

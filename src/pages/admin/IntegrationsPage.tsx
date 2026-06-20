@@ -13,10 +13,28 @@ import { useLeaderboard } from '@/hooks/useTeam'
 
 const db = supabase as any
 
+const ENDPOINT_MAP: Record<string, string> = {
+  twilio_au: '/functions/v1/twilio-voice-webhook',
+  twilio_us: '/functions/v1/twilio-voice-webhook',
+  stripe: '/functions/v1/webhook-stripe',
+  gocardless: '/functions/v1/webhook-gocardless',
+  deepgram: 'Live transcription service (TRANSCRIPTION_WS_URL)',
+  elevenlabs: '/functions/v1/elevenlabs-practice-call',
+  mapbox: '/functions/v1/mapbox-geocode',
+  xero: '/functions/v1/xero-push-payroll',
+  praktika: '/functions/v1/sync-pms',
+  anthropic: 'Edge Function secret',
+  openai: 'Edge Function secret',
+  resend: 'Edge Function secret',
+}
+
 const DEMO_INTEGRATIONS = [
   { integration_key: 'twilio_au', label: 'Twilio Australia', is_active: false },
   { integration_key: 'stripe', label: 'Stripe', is_active: false },
   { integration_key: 'deepgram', label: 'Deepgram', is_active: false },
+  { integration_key: 'xero', label: 'Xero', is_active: false },
+  { integration_key: 'praktika', label: 'Praktika PMS', is_active: false },
+  { integration_key: 'elevenlabs', label: 'ElevenLabs', is_active: false },
 ]
 
 export function IntegrationsPage() {
@@ -42,7 +60,7 @@ export function IntegrationsPage() {
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead>Integration</TableHead>
-                  <TableHead>Webhook</TableHead>
+                  <TableHead>Endpoint</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -51,7 +69,7 @@ export function IntegrationsPage() {
                   <TableRow key={i.integration_key}>
                     <TableCell className="font-medium">{i.label}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      /functions/v1/webhook-{i.integration_key.replace('_', '-')}
+                      {ENDPOINT_MAP[i.integration_key] ?? 'Configure in secrets'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={i.is_active ? 'success' : 'secondary'}>
