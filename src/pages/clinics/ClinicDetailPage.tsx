@@ -9,6 +9,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useClinic } from '@/hooks/useDashboard'
 import { useClinicTimeline, useClinicOnboarding, useClinicLedger } from '@/hooks/useBookings'
+import {
+  useClinicProposals, useCreateClinicProposal, useClinicContacts, useCreateClinicContact,
+  useToggleOnboardingItem, useSendClinicReply,
+} from '@/hooks/useSpecFeatures'
+import { Switch } from '@/components/ui/switch'
+import { Input } from '@/components/ui/input'
+import { formatCurrency } from '@/lib/utils'
 import { api } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -22,7 +29,16 @@ export function ClinicDetailPage() {
   const { data: timeline, isLoading: tlLoading } = useClinicTimeline(clinic?.id)
   const { data: onboarding } = useClinicOnboarding(clinic?.id)
   const { data: ledger } = useClinicLedger(clinic?.id)
+  const { data: proposals } = useClinicProposals(clinic?.id)
+  const { data: contacts } = useClinicContacts(clinic?.id)
+  const createProposal = useCreateClinicProposal(clinic?.id)
+  const createContact = useCreateClinicContact(clinic?.id)
+  const toggleOnboarding = useToggleOnboardingItem(clinic?.id)
+  const sendReply = useSendClinicReply()
   const [draft, setDraft] = useState('')
+  const [proposalTitle, setProposalTitle] = useState('')
+  const [contactName, setContactName] = useState('')
+  const [smsBody, setSmsBody] = useState('')
 
   const { data: pmsLog } = useQuery({
     queryKey: ['pms-sync', clinic?.id],
@@ -84,8 +100,10 @@ export function ClinicDetailPage() {
             actions={<Badge variant="secondary">{clinic.credit_balance} credits</Badge>}
           />
           <Tabs defaultValue="timeline">
-            <TabsList>
+            <TabsList className="flex-wrap h-auto">
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="proposals">Proposals</TabsTrigger>
+              <TabsTrigger value="contacts">Contacts</TabsTrigger>
               <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
               <TabsTrigger value="billing">Billing</TabsTrigger>
               <TabsTrigger value="pms">PMS sync</TabsTrigger>
@@ -106,13 +124,49 @@ export function ClinicDetailPage() {
                 ))
               )}
             </TabsContent>
+            <TabsContent value="proposals" className="mt-4 space-y-3">
+              <div className="flex gap-2">
+                <Input placeholder="Proposal title" value={proposalTitle} onChange={(e) => setProposalTitle(e.target.value)} />
+                <Button disabled={!proposalTitle.trim() || createProposal.isPending} onClick={() => {
+                  void createProposal.mutateAsync({ title: proposalTitle, totalCents: 0 }).then(() => {
+                    setProposalTitle('')
+                    toast.success('Proposal created')
+                  })
+                }}>Add</Button>
+              </div>
+              {(proposals ?? []).map((p) => (
+                <div key={p.id} className="flex justify-between rounded-lg border border-border/40 p-3 text-sm">
+                  <span>{p.title}</span>
+                  <Badge variant="secondary">{p.status} · {formatCurrency(p.total_cents / 100)}</Badge>
+                </div>
+              ))}
+              {(proposals ?? []).length === 0 && <EmptyState title="No proposals" description="Create a proposal for this clinic." className="py-6" />}
+            </TabsContent>
+            <TabsContent value="contacts" className="mt-4 space-y-3">
+              <div className="flex gap-2">
+                <Input placeholder="Contact name" value={contactName} onChange={(e) => setContactName(e.target.value)} />
+                <Button disabled={!contactName.trim() || createContact.isPending} onClick={() => {
+                  void createContact.mutateAsync({ fullName: contactName }).then(() => {
+                    setContactName('')
+                    toast.success('Contact added')
+                  })
+                }}>Add</Button>
+              </div>
+              {(contacts ?? []).map((c) => (
+                <div key={c.id} className="rounded-lg border border-border/40 p-3 text-sm">
+                  <p className="font-medium">{c.full_name}{c.is_primary && ' · Primary'}</p>
+                  <p className="text-muted-foreground">{c.role ?? 'Contact'}{c.email ? ` · ${c.email}` : ''}</p>
+                </div>
+              ))}
+            </TabsContent>
             <TabsContent value="onboarding" className="mt-4 space-y-2">
               {(onboarding ?? []).map((item: { item_key: string; label: string; is_complete: boolean }) => (
                 <div key={item.item_key} className="flex items-center justify-between rounded-lg border border-border/40 p-3 text-sm">
                   <span>{item.label}</span>
-                  <Badge variant={item.is_complete ? 'success' : 'secondary'}>
-                    {item.is_complete ? 'Done' : 'Pending'}
-                  </Badge>
+                  <Switch
+                    checked={item.is_complete}
+                    onCheckedChange={(checked) => void toggleOnboarding.mutateAsync({ itemKey: item.item_key, complete: checked })}
+                  />
                 </div>
               ))}
             </TabsContent>
@@ -142,8 +196,13 @@ export function ClinicDetailPage() {
           <Card className="border-border/40">
             <CardHeader><CardTitle className="text-base">Actions</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full" onClick={() => toast.info('Clinic calling — configure Twilio in Integrations')}>Call clinic</Button>
-              <Button variant="outline" className="w-full" onClick={() => toast.info('SMS — open Comms inbox to message this clinic')}>Send SMS</Button>
+              <Input placeholder="SMS message to clinic" value={smsBody} onChange={(e) => setSmsBody(e.target.value)} />
+              <Button variant="outline" className="w-full" disabled={!smsBody.trim() || sendReply.isPending} onClick={() => {
+                void sendReply.mutateAsync({ clinicId: clinic.id, body: smsBody }).then(() => {
+                  setSmsBody('')
+                  toast.success('Message sent')
+                })
+              }}>Send SMS</Button>
               <Button variant="outline" className="w-full" onClick={() => void handleDraftReply()}>Draft reply with AI</Button>
             </CardContent>
           </Card>

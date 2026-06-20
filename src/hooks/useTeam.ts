@@ -165,15 +165,15 @@ export function useCommunityPosts() {
       }
       const { data, error } = await db
         .from('community_posts')
-        .select('id, body, created_at, staff_profiles(full_name)')
+        .select('id, body, created_at, author:staff_profiles!community_posts_author_id_fkey(full_name)')
         .order('created_at', { ascending: false })
         .limit(20)
       if (error) throw error
-      return ((data ?? []) as { id: string; body: string; created_at: string; staff_profiles: { full_name: string } | null }[]).map((p) => ({
+      return ((data ?? []) as { id: string; body: string; created_at: string; author: { full_name: string } | null }[]).map((p) => ({
         id: p.id,
         body: p.body,
         created_at: p.created_at,
-        author_name: p.staff_profiles?.full_name ?? 'Staff',
+        author_name: p.author?.full_name ?? 'Staff',
       }))
     },
   })

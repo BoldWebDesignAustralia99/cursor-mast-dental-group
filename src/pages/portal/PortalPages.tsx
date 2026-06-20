@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { format, isFuture } from 'date-fns'
+import { format, isFuture, addDays } from 'date-fns'
 import { Phone, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { PermissionGate } from '@/components/auth/PermissionGate'
@@ -11,6 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { usePortalBookings, usePortalCredits, usePractitionerSchedule, useClinicPatientComms, useClinicCallingNumbers } from '@/hooks/usePortal'
+import { useClinicAvailableDates } from '@/hooks/useSpecFeatures'
+import { useQuery } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { isDemoModeEnabled } from '@/lib/demo'
 
 export function PortalBookingsPage() {
   const { data: bookings, isLoading, isError, refetch } = usePortalBookings()
@@ -133,6 +137,17 @@ export function PortalCreditsPage() {
 export function PortalCalendarPage() {
   const { data: schedule, isLoading, isError, refetch } = usePractitionerSchedule()
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const { data: clinicRow } = useQuery({
+    queryKey: ['portal-clinic-id'],
+    queryFn: async () => {
+      if (isDemoModeEnabled()) return { id: 'a0000001-0000-4000-8000-000000000001' }
+      const { data } = await (supabase as any).from('clinics').select('id').limit(1).single()
+      return data as { id: string }
+    },
+  })
+  const start = format(new Date(), 'yyyy-MM-dd')
+  const end = format(addDays(new Date(), 14), 'yyyy-MM-dd')
+  const { data: previewDates } = useClinicAvailableDates(clinicRow?.id, start, end)
 
   return (
     <PermissionGate permission="portal.calendar.manage">
@@ -170,11 +185,20 @@ export function PortalCalendarPage() {
             )}
           </TabsContent>
           <TabsContent value="preview" className="mt-4">
-            <EmptyState
-              title="Availability preview"
-              description="Live slot preview matches what reps see when booking. Configure weekly hours first — full calendar preview coming soon."
-              className="py-8"
-            />
+            {(previewDates ?? []).length === 0 ? (
+              <EmptyState title="No availability in next 14 days" description="Configure weekly hours to open booking slots." className="py-8" />
+            ) : (
+              <Card className="border-border/40">
+                <CardContent className="divide-y divide-border/40 p-0">
+                  {(previewDates ?? []).map((d: { available_date: string; slot_count: number }) => (
+                    <div key={d.available_date} className="flex items-center justify-between p-4 text-sm">
+                      <span>{format(new Date(d.available_date), 'EEE d MMM yyyy')}</span>
+                      <Badge variant="secondary">{d.slot_count} slots</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

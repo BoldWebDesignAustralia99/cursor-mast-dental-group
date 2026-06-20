@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTrainingJourneys } from '@/hooks/useWorkflows'
+import { TrainingProgressActions } from '@/components/training/TrainingProgressActions'
 
 export function TrainingPage() {
   const { data: journeys, isLoading, isError, refetch } = useTrainingJourneys()
@@ -31,7 +32,10 @@ export function TrainingPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">{j.journey_name}</CardTitle>
-                    <Badge variant="secondary">{pct}% complete</Badge>
+                    <div className="flex items-center gap-2">
+                      <TrainingProgressActions journeyId={j.journey_id} />
+                      <Badge variant="secondary">{pct}% complete</Badge>
+                    </div>
                   </div>
                   <Progress value={pct} className="mt-3 h-1.5" />
                 </CardHeader>

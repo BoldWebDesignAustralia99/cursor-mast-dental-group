@@ -148,12 +148,12 @@ export function useCommsInbox() {
     queryFn: async () => {
       if (isDemoModeEnabled()) {
         return [
-          { id: '1', clinic_name: 'Mast Dental Moorooka', body: 'Can we get more bookings next week?', created_at: new Date().toISOString() },
+          { id: '1', clinic_id: 'a0000001-0000-4000-8000-000000000001', clinic_name: 'Mast Dental Moorooka', body: 'Can we get more bookings next week?', created_at: new Date().toISOString() },
         ]
       }
       const { data, error } = await supabase.rpc('get_clinic_comms_inbox')
       if (error) throw error
-      return (data ?? []) as unknown as { id: string; clinic_name: string; body: string; created_at: string }[]
+      return (data ?? []) as unknown as { id: string; clinic_id: string; clinic_name: string; body: string; created_at: string }[]
     },
   })
 }

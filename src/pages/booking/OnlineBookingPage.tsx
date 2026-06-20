@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { format, addDays, setHours, setMinutes } from 'date-fns'
+import { format, addDays } from 'date-fns'
 import { CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -11,13 +11,13 @@ import { Badge } from '@/components/ui/badge'
 import { LoadingScreen, ErrorState } from '@/components/shared/PageStates'
 import { formatCurrency } from '@/lib/utils'
 import { useCreateOnlineBooking, useOnlineBookingPage } from '@/hooks/useOnlineBooking'
+import { useClinicAvailableSlots } from '@/hooks/useSpecFeatures'
 
-const TIME_SLOTS = ['09:00', '10:30', '13:00', '14:30', '16:00']
 const STEPS = ['Your details', 'Date & time', 'Confirm']
 
 export function OnlineBookingPage() {
   const { slug = 'moorooka-implants' } = useParams()
-  const { data: page, isLoading, error, refetch } = useOnlineBookingPage(slug)
+  const { data: page, isLoading, error, refetch } = useOnlineBookingPage(slug!)
   const createBooking = useCreateOnlineBooking()
 
   const [step, setStep] = useState(0)
@@ -26,9 +26,11 @@ export function OnlineBookingPage() {
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [selectedDate, setSelectedDate] = useState(format(addDays(new Date(), 3), 'yyyy-MM-dd'))
-  const [selectedTime, setSelectedTime] = useState('10:30')
+  const [selectedSlot, setSelectedSlot] = useState<{ start: string; end: string } | null>(null)
   const [confirmed, setConfirmed] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  const { data: slots, isLoading: slotsLoading } = useClinicAvailableSlots(page?.clinic_id, selectedDate)
 
   const validateStep = () => {
     const errors: Record<string, string> = {}
@@ -37,6 +39,7 @@ export function OnlineBookingPage() {
       if (!lastName.trim()) errors.lastName = 'Last name is required'
       if (!phone.trim()) errors.phone = 'Mobile number is required'
     }
+    if (step === 1 && !selectedSlot) errors.slot = 'Select a time slot'
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
   }
@@ -48,21 +51,17 @@ export function OnlineBookingPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validateStep()) return
-
-    const [h, m] = selectedTime.split(':').map(Number)
-    const start = setMinutes(setHours(new Date(selectedDate), h), m)
-    const end = new Date(start.getTime() + 60 * 60_000)
+    if (!validateStep() || !selectedSlot) return
 
     void createBooking
       .mutateAsync({
-        slug,
+        slug: slug!,
         firstName,
         lastName,
         phone,
         email: email || undefined,
-        scheduledStart: start.toISOString(),
-        scheduledEnd: end.toISOString(),
+        scheduledStart: selectedSlot.start,
+        scheduledEnd: selectedSlot.end,
       })
       .then(() => {
         setConfirmed(true)
@@ -71,26 +70,17 @@ export function OnlineBookingPage() {
       .catch(() => toast.error('Could not complete booking'))
   }
 
-  if (isLoading) {
-    return <LoadingScreen message="Loading booking page…" />
-  }
+  if (isLoading) return <LoadingScreen message="Loading booking page…" />
 
   if (error || !page) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-6">
-        <ErrorState
-          title="Booking page not found"
-          message="This link may be inactive or incorrect. Contact the clinic if you need help."
-          retryLabel="Try again"
-          onRetry={() => void refetch()}
-          className="max-w-md"
-        />
+        <ErrorState title="Booking page not found" message="This link may be inactive or incorrect." retryLabel="Try again" onRetry={() => void refetch()} className="max-w-md" />
       </div>
     )
   }
 
-  if (confirmed) {
-    const when = format(new Date(`${selectedDate}T${selectedTime}`), 'EEEE d MMMM, h:mm a')
+  if (confirmed && selectedSlot) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-6">
         <Card className="max-w-md border-border/40">
@@ -99,10 +89,8 @@ export function OnlineBookingPage() {
             <Badge variant="success">Confirmed</Badge>
             <h1 className="text-xl font-semibold">You&apos;re all set, {firstName}!</h1>
             <p className="text-sm text-muted-foreground">
-              {when} at {page.clinic_name}
-              {page.suburb ? `, ${page.suburb}` : ''}
+              {format(new Date(selectedSlot.start), 'EEEE d MMMM, h:mm a')} at {page.clinic_name}
             </p>
-            <p className="text-sm text-muted-foreground">We&apos;ll send a confirmation SMS to {phone} shortly.</p>
           </CardContent>
         </Card>
       </div>
@@ -110,127 +98,75 @@ export function OnlineBookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-lg px-4 py-10">
-        <div className="mb-8 text-center">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Mast Dental Group</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">{page.title}</h1>
-          {page.description && (
-            <p className="mt-2 text-sm text-muted-foreground">{page.description}</p>
-          )}
-          <p className="mt-1 text-sm text-muted-foreground">{page.clinic_name}{page.suburb ? ` · ${page.suburb}` : ''}</p>
+    <div className="min-h-screen bg-background p-6">
+      <div className="mx-auto max-w-lg space-y-6">
+        <div>
+          <Badge variant="secondary">{page.suburb}</Badge>
+          <h1 className="mt-2 text-2xl font-semibold">{page.title}</h1>
+          <p className="text-sm text-muted-foreground">{page.description}</p>
         </div>
-
-        <div className="mb-6 flex justify-center gap-2">
+        <div className="flex gap-2">
           {STEPS.map((label, i) => (
-            <div key={label} className="flex items-center gap-2">
-              <span
-                className={`flex size-6 items-center justify-center rounded-full text-xs font-medium ${
-                  i <= step ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {i + 1}
-              </span>
-              <span className={`hidden text-xs sm:inline ${i === step ? 'font-medium' : 'text-muted-foreground'}`}>
-                {label}
-              </span>
-              {i < STEPS.length - 1 && <span className="hidden h-px w-4 bg-border sm:block" />}
-            </div>
+            <Badge key={label} variant={i === step ? 'default' : 'outline'}>{label}</Badge>
           ))}
         </div>
-
-        <Card className="border-border/40">
-          <CardHeader>
-            <CardTitle className="text-base">{STEPS[step]}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {step === 0 && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="firstName">First name</Label>
-                      <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                      {fieldErrors.firstName && <p className="text-xs text-destructive">{fieldErrors.firstName}</p>}
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="lastName">Last name</Label>
-                      <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                      {fieldErrors.lastName && <p className="text-xs text-destructive">{fieldErrors.lastName}</p>}
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone">Mobile</Label>
-                    <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-                    {fieldErrors.phone && <p className="text-xs text-destructive">{fieldErrors.phone}</p>}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email">Email (optional)</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  <Button type="button" className="w-full" onClick={handleNext}>Continue</Button>
-                </>
-              )}
-
-              {step === 1 && (
-                <>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="date">Preferred date</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={selectedDate}
-                      min={format(new Date(), 'yyyy-MM-dd')}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Preferred time</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {TIME_SLOTS.map((t) => (
+        <form onSubmit={handleSubmit}>
+          {step === 0 && (
+            <Card className="border-border/40">
+              <CardContent className="space-y-4 p-6">
+                <div><Label>First name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />{fieldErrors.firstName && <p className="text-xs text-destructive">{fieldErrors.firstName}</p>}</div>
+                <div><Label>Last name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} />{fieldErrors.lastName && <p className="text-xs text-destructive">{fieldErrors.lastName}</p>}</div>
+                <div><Label>Mobile</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} />{fieldErrors.phone && <p className="text-xs text-destructive">{fieldErrors.phone}</p>}</div>
+                <div><Label>Email (optional)</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                <Button type="button" className="w-full" onClick={handleNext}>Continue</Button>
+              </CardContent>
+            </Card>
+          )}
+          {step === 1 && (
+            <Card className="border-border/40">
+              <CardContent className="space-y-4 p-6">
+                <div><Label>Date</Label><Input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlot(null) }} /></div>
+                {slotsLoading ? <p className="text-sm text-muted-foreground">Loading available slots…</p> : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {(slots ?? []).length === 0 ? (
+                      <p className="col-span-2 text-sm text-muted-foreground">No slots available this day — try another date.</p>
+                    ) : (
+                      (slots ?? []).map((s) => (
                         <Button
-                          key={t}
+                          key={s.slot_start}
                           type="button"
-                          size="sm"
-                          variant={selectedTime === t ? 'default' : 'outline'}
-                          onClick={() => setSelectedTime(t)}
+                          variant={selectedSlot?.start === s.slot_start ? 'default' : 'outline'}
+                          onClick={() => setSelectedSlot({ start: s.slot_start, end: s.slot_end })}
                         >
-                          {t}
+                          {format(new Date(s.slot_start), 'h:mm a')}
                         </Button>
-                      ))}
-                    </div>
+                      ))
+                    )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(0)}>Back</Button>
-                    <Button type="button" className="flex-1" onClick={handleNext}>Continue</Button>
-                  </div>
-                </>
-              )}
-
-              {step === 2 && (
-                <>
-                  <div className="rounded-lg border border-border/40 bg-muted/30 p-4 text-sm space-y-2">
-                    <p><span className="text-muted-foreground">Name:</span> {firstName} {lastName}</p>
-                    <p><span className="text-muted-foreground">Phone:</span> {phone}</p>
-                    <p><span className="text-muted-foreground">When:</span> {format(new Date(`${selectedDate}T${selectedTime}`), 'EEE d MMM, h:mm a')}</p>
-                    <p><span className="text-muted-foreground">Where:</span> {page.clinic_name}</p>
-                  </div>
-                  {page.deposit_cents > 0 && (
-                    <p className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
-                      A {formatCurrency(page.deposit_cents / 100)} deposit secures your appointment. Payment link sent after booking.
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>Back</Button>
-                    <Button type="submit" className="flex-1" disabled={createBooking.isPending}>
-                      {createBooking.isPending ? 'Booking…' : 'Confirm consultation'}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+                )}
+                {fieldErrors.slot && <p className="text-xs text-destructive">{fieldErrors.slot}</p>}
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => setStep(0)}>Back</Button>
+                  <Button type="button" className="flex-1" onClick={handleNext}>Continue</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {step === 2 && selectedSlot && (
+            <Card className="border-border/40">
+              <CardHeader><CardTitle className="text-base">Confirm booking</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm">{firstName} {lastName} · {phone}</p>
+                <p className="text-sm">{format(new Date(selectedSlot.start), 'EEEE d MMM, h:mm a')} at {page.clinic_name}</p>
+                {page.deposit_cents > 0 && <p className="text-sm text-muted-foreground">Deposit: {formatCurrency(page.deposit_cents / 100)} (collected separately)</p>}
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => setStep(1)}>Back</Button>
+                  <Button type="submit" className="flex-1" disabled={createBooking.isPending}>{createBooking.isPending ? 'Booking…' : 'Confirm booking'}</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </form>
       </div>
     </div>
   )

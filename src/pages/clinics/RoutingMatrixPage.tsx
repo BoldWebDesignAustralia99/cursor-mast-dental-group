@@ -8,9 +8,26 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { useRoutingMatrix, useCommsInbox } from '@/hooks/useBookings'
+import { useUpdateRoutingWeight, useSendClinicReply } from '@/hooks/useSpecFeatures'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 export function RoutingMatrixPage() {
   const { data: matrix, isLoading } = useRoutingMatrix()
+  const updateWeight = useUpdateRoutingWeight()
+  const [editing, setEditing] = useState<string | null>(null)
+  const [weightVal, setWeightVal] = useState('')
+
+  const saveWeight = (zoneId: string, clinicId: string) => {
+    const w = parseInt(weightVal, 10)
+    if (Number.isNaN(w)) return
+    void updateWeight.mutateAsync({ zoneId, clinicId, weight: w }).then(() => {
+      toast.success('Weight updated')
+      setEditing(null)
+    })
+  }
 
   return (
     <PermissionGate permission="leads.manage">
@@ -33,12 +50,22 @@ export function RoutingMatrixPage() {
               </TableHeader>
               <TableBody>
                 {(matrix ?? []).map((row) => {
-                  const r = row as { zone_name: string; clinic_name: string; weight: number; cap_per_period: number; period_count: number; credit_balance: number }
+                  const r = row as { zone_id: string; zone_name: string; clinic_id: string; clinic_name: string; weight: number; cap_per_period: number; period_count: number; credit_balance: number }
+                  const key = `${r.zone_id}-${r.clinic_id}`
                   return (
-                  <TableRow key={`${r.zone_name}-${r.clinic_name}`}>
+                  <TableRow key={key}>
                     <TableCell>{r.zone_name}</TableCell>
                     <TableCell className="font-medium">{r.clinic_name}</TableCell>
-                    <TableCell className="text-right tabular-nums">{r.weight}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {editing === key ? (
+                        <div className="flex justify-end gap-1">
+                          <Input className="h-8 w-16" value={weightVal} onChange={(e) => setWeightVal(e.target.value)} />
+                          <Button size="sm" onClick={() => saveWeight(r.zone_id, r.clinic_id)}>Save</Button>
+                        </div>
+                      ) : (
+                        <button type="button" className="underline-offset-2 hover:underline" onClick={() => { setEditing(key); setWeightVal(String(r.weight)) }}>{r.weight}</button>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">{r.cap_per_period}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.period_count}</TableCell>
                     <TableCell className="text-right">
@@ -63,6 +90,9 @@ export function RoutingMatrixPage() {
 
 export function CommsInboxPage() {
   const { data: messages, isLoading } = useCommsInbox()
+  const sendReply = useSendClinicReply()
+  const [replyTo, setReplyTo] = useState<string | null>(null)
+  const [replyBody, setReplyBody] = useState('')
 
   return (
     <PermissionGate permission="clinics.comms.view">
@@ -72,15 +102,31 @@ export function CommsInboxPage() {
           <Skeleton className="h-32 w-full" />
         ) : (
           <div className="divide-y divide-border/40 rounded-xl border border-border/40">
-            {(messages ?? []).map((item: { id: string; clinic_name: string; body: string; created_at: string }) => (
-              <div key={item.id} className="flex items-center justify-between p-4 hover:bg-accent/30">
-                <div>
-                  <p className="font-medium text-sm">{item.clinic_name}</p>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{item.body}</p>
+            {(messages ?? []).map((item: { id: string; clinic_id: string; clinic_name: string; body: string; created_at: string }) => (
+              <div key={item.id} className="p-4 hover:bg-accent/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{item.clinic_name}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{item.body}</p>
+                  </div>
+                  <Badge variant="secondary">
+                    {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+                  </Badge>
                 </div>
-                <Badge variant="secondary">
-                  {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
-                </Badge>
+                {replyTo === item.id ? (
+                  <div className="mt-3 flex gap-2">
+                    <Input value={replyBody} onChange={(e) => setReplyBody(e.target.value)} placeholder="Reply…" />
+                    <Button size="sm" disabled={!replyBody.trim()} onClick={() => {
+                      void sendReply.mutateAsync({ clinicId: item.clinic_id, body: replyBody }).then(() => {
+                        toast.success('Reply sent')
+                        setReplyTo(null)
+                        setReplyBody('')
+                      })
+                    }}>Send</Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="ghost" className="mt-2" onClick={() => setReplyTo(item.id)}>Reply</Button>
+                )}
               </div>
             ))}
             {(messages ?? []).length === 0 ? (
