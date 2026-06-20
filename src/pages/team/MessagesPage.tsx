@@ -103,11 +103,34 @@ export function LeavePage() {
   )
 }
 
+import { toast } from 'sonner'
+import { api } from '@/lib/api'
+
 export function PayrollPage() {
+  const handleXeroConnect = () => {
+    void api.xeroOAuthStart().then((res) => {
+      if (res.auth_url) window.open(res.auth_url, '_blank')
+      else toast.message('Configure XERO_CLIENT_ID in Edge Function secrets')
+    })
+  }
+
+  const handlePushPayroll = () => {
+    void api.xeroPushPayroll('demo-run-id').then(() => toast.success('Payroll push queued')).catch(() => toast.error('Xero not configured'))
+  }
+
   return (
     <PermissionGate permission="payroll.view">
       <div className="space-y-6">
-        <PageHeader title="Payroll" description="Pay periods, commission, and Xero push" />
+        <PageHeader
+          title="Payroll"
+          description="Pay periods, commission, and Xero push"
+          actions={
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleXeroConnect}>Connect Xero</Button>
+              <Button size="sm" onClick={handlePushPayroll}>Push to Xero</Button>
+            </div>
+          }
+        />
         <Card className="border-border/40">
           <CardContent className="p-4 text-sm">Current period: 1–15 Jun 2026 · Status: Draft</CardContent>
         </Card>

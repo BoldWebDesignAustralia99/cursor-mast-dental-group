@@ -19,8 +19,12 @@ export async function invokeFunction<T>(
 export const api = {
   classifyBooking: (bookingId: string, transcript: string) =>
     invokeFunction('classify-booking', { booking_id: bookingId, transcript }),
-  aiCallNotes: (communicationId: string, transcript: string) =>
-    invokeFunction('ai-call-notes', { communication_id: communicationId, transcript }),
+  aiCallNotes: (communicationOrCallLogId: string, transcript: string, callLogId?: string) =>
+    invokeFunction('ai-call-notes', {
+      communication_id: callLogId ? undefined : communicationOrCallLogId,
+      call_log_id: callLogId ?? communicationOrCallLogId,
+      transcript,
+    }),
   createDepositLink: (bookingId: string, amountCents: number, phone: string) =>
     invokeFunction<{ url: string }>('create-deposit-link', {
       booking_id: bookingId,
@@ -43,6 +47,8 @@ export const api = {
     invokeFunction<{ ok: boolean }>('sync-pms', { clinic_id: clinicId }),
   xeroPushPayroll: (payrollRunId: string) =>
     invokeFunction<{ ok: boolean }>('xero-push-payroll', { payroll_run_id: payrollRunId }),
+  xeroOAuthStart: () =>
+    invokeFunction<{ configured: boolean; auth_url?: string }>('xero-oauth', {}),
   elevenLabsPracticeCall: (script: string) =>
     invokeFunction<{ audio_url?: string; configured?: boolean }>('elevenlabs-practice-call', { script }),
 }

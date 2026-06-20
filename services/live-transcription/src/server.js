@@ -1,20 +1,22 @@
 /**
- * Live transcription WebSocket service (§8.2)
- * Twilio Media Streams → transcript segments → Supabase + client fan-out
- *
- * Env: PORT, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DEEPGRAM_API_KEY (optional)
+ * Live transcription — Twilio Media Streams + Deepgram + Supabase fan-out
  */
 import { createServer } from 'node:http'
-import { WebSocketServer } from 'ws'
+import { WebSocketServer, WebSocket } from 'ws'
 import { createClient } from '@supabase/supabase-js'
 
 const PORT = Number(process.env.PORT ?? 8081)
+const DEEPGRAM_KEY = process.env.DEEPGRAM_API_KEY
+
 const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   : null
 
-/** @type {Map<string, Set<import('ws').WebSocket>>} */
+/** @type {Map<string, Set<WebSocket>>} */
 const leadSubscribers = new Map()
+
+/** @type {Map<string, WebSocket>} */
+const deepgramByCall = new Map()
 
 function subscribe(leadId, ws) {
   if (!leadSubscribers.has(leadId)) leadSubscribers.set(leadId, new Set())
@@ -28,12 +30,12 @@ function unsubscribe(leadId, ws) {
 function broadcast(leadId, payload) {
   const msg = JSON.stringify(payload)
   for (const ws of leadSubscribers.get(leadId) ?? []) {
-    if (ws.readyState === 1) ws.send(msg)
+    if (ws.readyState === WebSocket.OPEN) ws.send(msg)
   }
 }
 
 async function persistSegment(callLogId, leadId, speaker, text, isFinal) {
-  if (!supabase) return
+  if (!supabase || !text) return
   await supabase.rpc('append_transcript_segment', {
     p_call_log_id: callLogId,
     p_speaker: speaker,
@@ -49,10 +51,36 @@ async function persistSegment(callLogId, leadId, speaker, text, isFinal) {
   }
 }
 
-const server = createServer((_req, res) => {
-  if (_req.url === '/health') {
+function openDeepgram(callLogId, leadId) {
+  if (!DEEPGRAM_KEY || deepgramByCall.has(callLogId)) return null
+
+  const dg = new WebSocket(
+    'wss://api.deepgram.com/v1/listen?encoding=mulaw&sample_rate=8000&channels=1&punctuate=true&interim_results=true',
+    { headers: { Authorization: `Token ${DEEPGRAM_KEY}` } },
+  )
+
+  dg.on('message', (raw) => {
+    try {
+      const data = JSON.parse(String(raw))
+      const alt = data.channel?.alternatives?.[0]
+      const text = alt?.transcript?.trim()
+      if (!text) return
+      const isFinal = data.is_final === true
+      const speaker = data.channel_index?.[0] === 0 ? 'patient' : 'rep'
+      broadcast(leadId, { type: 'transcript', speaker, text, is_final: isFinal })
+      if (isFinal) void persistSegment(callLogId, leadId, speaker, text, true)
+    } catch { /* ignore */ }
+  })
+
+  dg.on('close', () => deepgramByCall.delete(callLogId))
+  deepgramByCall.set(callLogId, dg)
+  return dg
+}
+
+const server = createServer((req, res) => {
+  if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ ok: true, service: 'live-transcription' }))
+    res.end(JSON.stringify({ ok: true, deepgram: Boolean(DEEPGRAM_KEY) }))
     return
   }
   res.writeHead(404)
@@ -68,16 +96,19 @@ wss.on('connection', (ws, req) => {
   const role = url.searchParams.get('role') ?? 'client'
 
   if (leadId) subscribe(leadId, ws)
+  if (callLogId && leadId) openDeepgram(callLogId, leadId)
 
-  ws.send(JSON.stringify({ type: 'connected', leadId, callLogId, role }))
+  ws.send(JSON.stringify({ type: 'connected', leadId, callLogId, role, deepgram: Boolean(DEEPGRAM_KEY) }))
 
   ws.on('message', async (raw) => {
     try {
       const data = JSON.parse(String(raw))
 
-      // Twilio Media Stream format (simplified)
-      if (data.event === 'media' && data.media?.payload) {
-        // In production: forward mulaw audio to Deepgram streaming API
+      if (data.event === 'media' && data.media?.payload && callLogId) {
+        const dg = deepgramByCall.get(callLogId)
+        if (dg?.readyState === WebSocket.OPEN) {
+          dg.send(JSON.stringify({ type: 'Audio', data: { payload: data.media.payload } }))
+        }
         return
       }
 
@@ -93,21 +124,22 @@ wss.on('connection', (ws, req) => {
         }
       }
 
-      // Demo/simulated transcript injection from client
       if (data.type === 'demo_segment' && leadId) {
         broadcast(leadId, { type: 'transcript', speaker: data.speaker, text: data.text, is_final: true })
         if (callLogId) await persistSegment(callLogId, leadId, data.speaker, data.text, true)
       }
-    } catch {
-      /* ignore malformed */
-    }
+    } catch { /* ignore */ }
   })
 
   ws.on('close', () => {
     if (leadId) unsubscribe(leadId, ws)
+    if (callLogId) {
+      deepgramByCall.get(callLogId)?.close()
+      deepgramByCall.delete(callLogId)
+    }
   })
 })
 
 server.listen(PORT, () => {
-  console.log(`Live transcription service on :${PORT}`)
+  console.log(`Live transcription on :${PORT} (deepgram=${Boolean(DEEPGRAM_KEY)})`)
 })

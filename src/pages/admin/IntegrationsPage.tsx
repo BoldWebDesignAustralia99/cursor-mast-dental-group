@@ -28,6 +28,10 @@ const ENDPOINT_MAP: Record<string, string> = {
   resend: 'Edge Function secret',
 }
 
+const OAUTH_INTEGRATIONS: Record<string, string> = {
+  xero: '/functions/v1/xero-oauth',
+}
+
 const DEMO_INTEGRATIONS = [
   { integration_key: 'twilio_au', label: 'Twilio Australia', is_active: false },
   { integration_key: 'stripe', label: 'Stripe', is_active: false },
@@ -69,7 +73,7 @@ export function IntegrationsPage() {
                   <TableRow key={i.integration_key}>
                     <TableCell className="font-medium">{i.label}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {ENDPOINT_MAP[i.integration_key] ?? 'Configure in secrets'}
+                      {OAUTH_INTEGRATIONS[i.integration_key] ?? ENDPOINT_MAP[i.integration_key] ?? 'Configure in secrets'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={i.is_active ? 'success' : 'secondary'}>
