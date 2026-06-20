@@ -428,6 +428,66 @@ export interface Database {
         Args: { p_lead_id: string; p_reason?: string }
         Returns: boolean
       }
+      get_booking_detail: {
+        Args: { p_booking_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      update_booking_outcome: {
+        Args: { p_booking_id: string; p_outcome: string }
+        Returns: undefined
+      }
+      mark_notifications_read: {
+        Args: { p_ids: string[] }
+        Returns: number
+      }
+      get_routing_matrix: {
+        Args: Record<string, never>
+        Returns: Record<string, unknown>[]
+      }
+      get_clinic_timeline: {
+        Args: { p_clinic_id: string; p_page?: number; p_page_size?: number }
+        Returns: Record<string, unknown>[]
+      }
+      get_clinic_onboarding: {
+        Args: { p_clinic_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_clinic_ledger: {
+        Args: { p_clinic_id: string; p_limit?: number }
+        Returns: Record<string, unknown>[]
+      }
+      get_clinic_comms_inbox: {
+        Args: Record<string, never>
+        Returns: Record<string, unknown>[]
+      }
+      get_portal_bookings: {
+        Args: { p_clinic_id?: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_tasks_board: {
+        Args: Record<string, never>
+        Returns: Record<string, unknown>[]
+      }
+      get_rep_leaderboard: {
+        Args: Record<string, never>
+        Returns: Record<string, unknown>[]
+      }
+      get_training_journeys_list: {
+        Args: Record<string, never>
+        Returns: Record<string, unknown>[]
+      }
+      get_classification_reviews: {
+        Args: { p_status?: string }
+        Returns: Record<string, unknown>[]
+      }
+      get_timesheets_recent: {
+        Args: Record<string, never>
+        Returns: Record<string, unknown>[]
+      }
+      get_leave_requests_list: {
+        Args: Record<string, never>
+        Returns: Record<string, unknown>[]
+      }
     }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>

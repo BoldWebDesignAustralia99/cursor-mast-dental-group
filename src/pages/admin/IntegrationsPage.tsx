@@ -1,56 +1,72 @@
+import { useQuery } from '@tanstack/react-query'
 import { PageHeader } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import { supabase } from '@/lib/supabase'
+import { isDemoModeEnabled } from '@/lib/demo'
+import { useLeaderboard } from '@/hooks/useTeam'
 
-const INTEGRATIONS = [
-  { key: 'twilio_au', label: 'Twilio Australia', status: 'Configure in env' },
-  { key: 'twilio_us', label: 'Twilio USA', status: 'Configure in env' },
-  { key: 'stripe', label: 'Stripe', status: 'Configure in env' },
-  { key: 'gocardless', label: 'GoCardless', status: 'Configure in env' },
-  { key: 'resend', label: 'Resend', status: 'Configure in env' },
-  { key: 'anthropic', label: 'Anthropic', status: 'Configure in env' },
-  { key: 'openai', label: 'OpenAI', status: 'Configure in env' },
-  { key: 'deepgram', label: 'Deepgram', status: 'Configure in env' },
-  { key: 'elevenlabs', label: 'ElevenLabs', status: 'Configure in env' },
-  { key: 'mapbox', label: 'Mapbox', status: 'Configure in env' },
-  { key: 'xero', label: 'Xero', status: 'Configure in env' },
-  { key: 'praktika', label: 'Praktika PMS', status: 'Configure in env' },
+const db = supabase as any
+
+const DEMO_INTEGRATIONS = [
+  { integration_key: 'twilio_au', label: 'Twilio Australia', is_active: false },
+  { integration_key: 'stripe', label: 'Stripe', is_active: false },
+  { integration_key: 'deepgram', label: 'Deepgram', is_active: false },
 ]
 
 export function IntegrationsPage() {
+  const { data: integrations, isLoading } = useQuery({
+    queryKey: ['integrations'],
+    queryFn: async () => {
+      if (isDemoModeEnabled()) return DEMO_INTEGRATIONS
+      const { data, error } = await db.from('integration_configs').select('integration_key, label, is_active')
+      if (error) throw error
+      return data ?? []
+    },
+  })
+
   return (
     <PermissionGate permission="integrations.manage">
       <div className="space-y-6">
         <PageHeader title="Integrations" description="API credentials and webhook endpoints" />
-        <Card className="border-border/40">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Integration</TableHead>
-                <TableHead>Webhook URL</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {INTEGRATIONS.map((i) => (
-                <TableRow key={i.key}>
-                  <TableCell className="font-medium">{i.label}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    /functions/v1/webhook-{i.key.replace('_', '-')}
-                  </TableCell>
-                  <TableCell><Badge variant="secondary">{i.status}</Badge></TableCell>
+        {isLoading ? (
+          <Skeleton className="h-64 w-full" />
+        ) : (
+          <Card className="border-border/40">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Integration</TableHead>
+                  <TableHead>Webhook</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {(integrations ?? []).map((i: { integration_key: string; label: string; is_active: boolean }) => (
+                  <TableRow key={i.integration_key}>
+                    <TableCell className="font-medium">{i.label}</TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      /functions/v1/webhook-{i.integration_key.replace('_', '-')}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={i.is_active ? 'success' : 'secondary'}>
+                        {i.is_active ? 'Active' : 'Configure secrets'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
         <Card className="border-border/40">
           <CardContent className="p-4 text-sm text-muted-foreground">
-            Set credentials in Supabase Edge Function secrets. Webhook URLs are documented in README.
+            Set credentials in Supabase Edge Function secrets. Live telephony requires Twilio + Deepgram keys.
           </CardContent>
         </Card>
       </div>
@@ -59,36 +75,38 @@ export function IntegrationsPage() {
 }
 
 export function PerformanceDashboardPage() {
-  const reps = [
-    { name: 'Sarah Chen', bookings: 18, shows: 12, grade: 82 },
-    { name: 'Mike Torres', bookings: 15, shows: 10, grade: 76 },
-  ]
+  const { data: reps, isLoading } = useLeaderboard()
+
   return (
     <PermissionGate permission="dashboard.view">
       <div className="space-y-6">
         <PageHeader title="Performance" description="Bookings, shows, and rep grades" />
-        <Card className="border-border/40">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Rep</TableHead>
-                <TableHead className="text-right tabular-nums">Bookings</TableHead>
-                <TableHead className="text-right tabular-nums">Shows</TableHead>
-                <TableHead className="text-right tabular-nums">Avg grade</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reps.map((r) => (
-                <TableRow key={r.name}>
-                  <TableCell className="font-medium">{r.name}</TableCell>
-                  <TableCell className="text-right tabular-nums">{r.bookings}</TableCell>
-                  <TableCell className="text-right tabular-nums">{r.shows}</TableCell>
-                  <TableCell className="text-right tabular-nums">{r.grade}</TableCell>
+        {isLoading ? (
+          <Skeleton className="h-48 w-full" />
+        ) : (
+          <Card className="border-border/40">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Rep</TableHead>
+                  <TableHead className="text-right tabular-nums">Bookings</TableHead>
+                  <TableHead className="text-right tabular-nums">Shows</TableHead>
+                  <TableHead className="text-right tabular-nums">Avg grade</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              </TableHeader>
+              <TableBody>
+                {(reps ?? []).map((r: { staff_id: string; full_name: string; bookings_month: number; shows_month: number; avg_grade: number | null }) => (
+                  <TableRow key={r.staff_id}>
+                    <TableCell className="font-medium">{r.full_name}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.bookings_month}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.shows_month}</TableCell>
+                    <TableCell className="text-right tabular-nums">{r.avg_grade?.toFixed(0) ?? '—'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
       </div>
     </PermissionGate>
   )

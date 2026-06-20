@@ -105,6 +105,8 @@ Key RPCs: `start_work`, `acquire_lead_lock`, `heartbeat_lead_lock`, `release_lea
 | `classify-booking` | AI classification from transcript |
 | `ai-call-notes` | Post-call summary + disposition |
 | `process-coaching` | Daily rep coaching job |
+| `process-jobs` | Background worker for job_queue + domain events |
+| `twilio-token` | Twilio Voice token stub (configure secrets for live calls) |
 | `create-deposit-link` | Stripe Checkout + SMS |
 | `ai-clinic-reply` | Draft clinic message replies |
 | `ai-admin-chat` | Internal data assistant |

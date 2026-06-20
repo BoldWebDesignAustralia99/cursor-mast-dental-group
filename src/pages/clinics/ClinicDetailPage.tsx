@@ -1,11 +1,14 @@
 import { useParams } from 'react-router-dom'
+import { format } from 'date-fns'
 import { PageHeader } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useClinicsList } from '@/hooks/useDashboard'
+import { useClinicTimeline, useClinicOnboarding, useClinicLedger } from '@/hooks/useBookings'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { useState } from 'react'
@@ -14,6 +17,9 @@ export function ClinicDetailPage() {
   const { id } = useParams()
   const { data } = useClinicsList(null, 1)
   const clinic = data?.rows.find((c) => c.id === id) ?? data?.rows[0]
+  const { data: timeline, isLoading: tlLoading } = useClinicTimeline(clinic?.id)
+  const { data: onboarding } = useClinicOnboarding(clinic?.id)
+  const { data: ledger } = useClinicLedger(clinic?.id)
   const [draft, setDraft] = useState('')
 
   const handleDraftReply = async () => {
@@ -27,7 +33,7 @@ export function ClinicDetailPage() {
     }
   }
 
-  if (!clinic) return null
+  if (!clinic) return <Skeleton className="h-64 w-full" />
 
   return (
     <PermissionGate permission="clinics.view">
@@ -35,36 +41,46 @@ export function ClinicDetailPage() {
         <div className="space-y-6">
           <PageHeader
             title={clinic.name}
-            description={`${clinic.suburb} · ${clinic.stage}`}
+            description={`${clinic.suburb ?? ''} · ${clinic.stage}`}
             actions={<Badge variant="secondary">{clinic.credit_balance} credits</Badge>}
           />
           <Tabs defaultValue="timeline">
             <TabsList>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
-              <TabsTrigger value="proposals">Proposals</TabsTrigger>
               <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
               <TabsTrigger value="billing">Billing</TabsTrigger>
             </TabsList>
             <TabsContent value="timeline" className="mt-4 space-y-2">
-              {['Proposal sent', 'Call logged', 'Clinic created'].map((e) => (
-                <Card key={e} className="border-border/40">
-                  <CardContent className="p-3 text-sm">{e}</CardContent>
-                </Card>
-              ))}
-            </TabsContent>
-            <TabsContent value="proposals" className="mt-4">
-              <Button>Send proposal</Button>
+              {tlLoading ? <Skeleton className="h-24" /> : (
+                (timeline ?? []).map((e: { id?: string; item_type?: string; summary: string; created_at: string }, i: number) => (
+                  <Card key={e.id ?? i} className="border-border/40">
+                    <CardContent className="flex justify-between p-3 text-sm">
+                      <span>{e.summary}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {format(new Date(e.created_at), 'd MMM HH:mm')}
+                      </span>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </TabsContent>
             <TabsContent value="onboarding" className="mt-4 space-y-2">
-              {['Portal accounts', 'Calendars', 'GoCardless mandate', 'First booking'].map((item) => (
-                <div key={item} className="flex items-center justify-between rounded-lg border border-border/40 p-3 text-sm">
-                  <span>{item}</span>
-                  <Badge variant="secondary">Pending</Badge>
+              {(onboarding ?? []).map((item: { item_key: string; label: string; is_complete: boolean }) => (
+                <div key={item.item_key} className="flex items-center justify-between rounded-lg border border-border/40 p-3 text-sm">
+                  <span>{item.label}</span>
+                  <Badge variant={item.is_complete ? 'success' : 'secondary'}>
+                    {item.is_complete ? 'Done' : 'Pending'}
+                  </Badge>
                 </div>
               ))}
             </TabsContent>
-            <TabsContent value="billing" className="mt-4">
-              <p className="text-sm text-muted-foreground">Credit ledger and invoices</p>
+            <TabsContent value="billing" className="mt-4 space-y-2">
+              {(ledger ?? []).map((entry: { id: string; amount: number; balance_after: number; reason: string; created_at: string }) => (
+                <div key={entry.id} className="flex justify-between rounded-lg border border-border/40 p-3 text-sm">
+                  <span>{entry.reason} ({entry.amount > 0 ? '+' : ''}{entry.amount})</span>
+                  <span className="text-muted-foreground tabular-nums">Balance: {entry.balance_after}</span>
+                </div>
+              ))}
             </TabsContent>
           </Tabs>
         </div>

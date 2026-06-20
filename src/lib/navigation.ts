@@ -116,6 +116,18 @@ const internalNav: NavGroup[] = [
         permission: 'settings.view',
       },
       {
+        title: 'Workflows',
+        href: '/admin/workflows',
+        icon: Settings,
+        permission: 'workflows.view',
+      },
+      {
+        title: 'Classification QA',
+        href: '/admin/classification',
+        icon: Shield,
+        permission: 'bookings.view',
+      },
+      {
         title: 'Integrations',
         href: '/admin/integrations',
         icon: Settings,

@@ -23,6 +23,7 @@ import {
   PortalBookingsPage,
   PortalCreditsPage,
   PortalCalendarPage,
+  PortalMessagesPage,
 } from '@/pages/portal/PortalPages'
 import { isSupabaseConfigured } from '@/lib/demo'
 
@@ -78,7 +79,7 @@ function AppRoutes() {
         <Route path="portal/bookings" element={<PortalBookingsPage />} />
         <Route path="portal/calendar" element={<PortalCalendarPage />} />
         <Route path="portal/credits" element={<PortalCreditsPage />} />
-        <Route path="portal/messages" element={<PortalBookingsPage />} />
+        <Route path="portal/messages" element={<PortalMessagesPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

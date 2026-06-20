@@ -31,4 +31,8 @@ export const api = {
     invokeFunction<{ draft: string }>('ai-clinic-reply', { communication_id: communicationId, context }),
   aiAdminChat: (question: string) =>
     invokeFunction<{ answer: string }>('ai-admin-chat', { question }),
+  twilioToken: (identity: string) =>
+    invokeFunction<{ configured: boolean; token?: string; message?: string }>('twilio-token', { identity }),
+  processJobs: (batch = 10) =>
+    invokeFunction<{ processed: number }>(`process-jobs?batch=${batch}`, {}),
 }

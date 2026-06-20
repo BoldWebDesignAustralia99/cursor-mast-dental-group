@@ -1,13 +1,17 @@
 import { PageHeader } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { useNotifications } from '@/hooks/useDashboard'
+import { useMarkNotificationsRead } from '@/hooks/usePortal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 
 export function NotificationsPage() {
   const { data, isLoading } = useNotifications()
+  const markRead = useMarkNotificationsRead()
+  const unreadIds = data?.rows.filter((n) => !n.is_read).map((n) => n.id) ?? []
 
   return (
     <PermissionGate permission="notifications.view">
@@ -15,6 +19,17 @@ export function NotificationsPage() {
         <PageHeader
           title="Notifications"
           description="Your activity feed, grouped by day"
+          actions={
+            unreadIds.length > 0 ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void markRead.mutateAsync(unreadIds)}
+              >
+                Mark all read
+              </Button>
+            ) : undefined
+          }
         />
 
         {isLoading ? (

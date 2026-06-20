@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/shared/PageStates'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { PermissionGate } from '@/components/auth/PermissionGate'
@@ -45,8 +46,10 @@ export function ClinicsPage() {
               </TableHeader>
               <TableBody>
                 {data?.rows.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableRow key={c.id} className="cursor-pointer hover:bg-accent/30">
+                    <TableCell className="font-medium">
+                      <Link to={`/clinics/${c.id}`} className="hover:underline">{c.name}</Link>
+                    </TableCell>
                     <TableCell>{c.suburb}</TableCell>
                     <TableCell><Badge variant="secondary">{c.stage}</Badge></TableCell>
                     <TableCell className="text-right tabular-nums">
@@ -61,11 +64,7 @@ export function ClinicsPage() {
         )}
 
         {totalPages > 1 && (
-          <PaginationControls
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+          <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
         )}
       </div>
     </PermissionGate>

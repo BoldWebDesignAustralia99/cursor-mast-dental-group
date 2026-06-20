@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { format } from 'date-fns'
 import { PageHeader } from '@/components/shared/PageStates'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { PermissionGate } from '@/components/auth/PermissionGate'
@@ -9,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { format } from 'date-fns'
 import { PAGE_SIZE } from '@/lib/constants'
 
 const OUTCOME_VARIANT: Record<string, 'success' | 'error' | 'warning' | 'secondary'> = {
@@ -43,8 +44,12 @@ export function BookingsPage() {
               </TableHeader>
               <TableBody>
                 {data?.rows.map((b) => (
-                  <TableRow key={b.id}>
-                    <TableCell className="font-medium">{b.patient_first_name} {b.patient_last_name}</TableCell>
+                  <TableRow key={b.id} className="cursor-pointer hover:bg-accent/30">
+                    <TableCell className="font-medium">
+                      <Link to={`/bookings/${b.id}`} className="hover:underline">
+                        {b.patient_first_name} {b.patient_last_name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{b.clinic_name}</TableCell>
                     <TableCell className="tabular-nums">{format(new Date(b.scheduled_start), 'd MMM yyyy, h:mm a')}</TableCell>
                     <TableCell><Badge variant="secondary">{b.status}</Badge></TableCell>
@@ -58,11 +63,7 @@ export function BookingsPage() {
         )}
 
         {totalPages > 1 && (
-          <PaginationControls
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+          <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
         )}
       </div>
     </PermissionGate>
