@@ -1,5 +1,5 @@
 import { PermissionGate } from '@/components/auth/PermissionGate'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -31,7 +31,7 @@ export function TeamPage() {
       <div className="space-y-6">
         <PageHeader title="Team & HR" description="Timesheets, leave, payroll, tasks, and messages" />
         <Tabs defaultValue="tasks">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="timesheets">Timesheets</TabsTrigger>
             <TabsTrigger value="leave">Leave</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
@@ -40,7 +40,9 @@ export function TeamPage() {
           </TabsList>
           <TabsContent value="timesheets" className="mt-4">
             <Section title="Recent timesheets">
-              {tsLoading ? <Skeleton className="h-24" /> : (
+              {tsLoading ? <Skeleton className="h-24 rounded-xl" /> : (timesheets ?? []).length === 0 ? (
+                <EmptyState title="No timesheets yet" description="Clock in from the timesheet page to start tracking hours." className="py-6" />
+              ) : (
                 <div className="space-y-2">
                   {(timesheets ?? []).map((t: { id: string; staff_name: string; clock_in: string; status: string }) => (
                     <div key={t.id} className="flex justify-between text-sm">
@@ -48,14 +50,15 @@ export function TeamPage() {
                       <span className="text-muted-foreground">{format(new Date(t.clock_in), 'd MMM HH:mm')} · {t.status}</span>
                     </div>
                   ))}
-                  {(timesheets ?? []).length === 0 && <p className="text-sm text-muted-foreground">No timesheets yet.</p>}
                 </div>
               )}
             </Section>
           </TabsContent>
           <TabsContent value="leave" className="mt-4">
             <Section title="Leave requests">
-              {leaveLoading ? <Skeleton className="h-24" /> : (
+              {leaveLoading ? <Skeleton className="h-24 rounded-xl" /> : (leave ?? []).length === 0 ? (
+                <EmptyState title="No leave requests" description="Submit a leave request from the Leave page when you need time off." className="py-6" />
+              ) : (
                 <div className="space-y-2">
                   {(leave ?? []).map((l) => (
                     <div key={l.id} className="flex justify-between text-sm">
@@ -63,14 +66,15 @@ export function TeamPage() {
                       <Badge variant="secondary">{l.status}</Badge>
                     </div>
                   ))}
-                  {(leave ?? []).length === 0 && <p className="text-sm text-muted-foreground">No leave requests.</p>}
                 </div>
               )}
             </Section>
           </TabsContent>
           <TabsContent value="tasks" className="mt-4">
             <Section title="Open tasks">
-              {tasksLoading ? <Skeleton className="h-24" /> : (
+              {tasksLoading ? <Skeleton className="h-24 rounded-xl" /> : (tasks ?? []).length === 0 ? (
+                <EmptyState title="No open tasks" description="Team tasks and follow-ups will appear here." className="py-6" />
+              ) : (
                 <div className="space-y-2">
                   {(tasks ?? []).map((t: { id: string; title: string; status: string; assignee_name: string | null }) => (
                     <div key={t.id} className="flex justify-between text-sm">
@@ -84,7 +88,9 @@ export function TeamPage() {
           </TabsContent>
           <TabsContent value="community" className="mt-4">
             <Section title="Community feed">
-              {postsLoading ? <Skeleton className="h-24" /> : (
+              {postsLoading ? <Skeleton className="h-24 rounded-xl" /> : (posts ?? []).length === 0 ? (
+                <EmptyState title="No posts yet" description="Share wins and announcements with the team." className="py-6" />
+              ) : (
                 <div className="space-y-3">
                   {(posts ?? []).map((p: { id: string; body: string; author_name: string }) => (
                     <div key={p.id} className="rounded-lg border border-border/40 p-3 text-sm">
@@ -98,7 +104,9 @@ export function TeamPage() {
           </TabsContent>
           <TabsContent value="leaderboard" className="mt-4">
             <Section title="This month">
-              {lbLoading ? <Skeleton className="h-32" /> : (
+              {lbLoading ? <Skeleton className="h-32 rounded-xl" /> : (leaderboard ?? []).length === 0 ? (
+                <EmptyState title="No leaderboard data" description="Rankings appear once reps start booking and showing." className="py-6" />
+              ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>

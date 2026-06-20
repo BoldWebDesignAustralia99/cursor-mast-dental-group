@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -25,7 +25,12 @@ export function WorkflowBuilderPage() {
           description="Trigger → conditions → steps. All outbound comms run through here."
         />
         {isLoading ? (
-          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-96 w-full rounded-xl" />
+        ) : (workflows ?? []).length === 0 ? (
+          <EmptyState
+            title="No workflows yet"
+            description="Automations route all outbound SMS, email, and reminders. Seed workflows via migrations or create one here."
+          />
         ) : (
           <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
             <Card className="border-border/40">
@@ -95,12 +100,12 @@ export function WorkflowBuilderPage() {
                         />
                       )}
                       {(steps ?? []).length === 0 && (
-                        <p className="text-sm text-muted-foreground">No steps configured yet.</p>
+                        <EmptyState title="No steps configured" description="Add trigger actions like send SMS or wait delay." className="mt-4 py-6" />
                       )}
                     </TabsContent>
                     <TabsContent value="runs" className="mt-4 space-y-2">
                       {(runs ?? []).length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No runs yet.</p>
+                        <EmptyState title="No runs yet" description="Workflow runs appear here once triggers fire." className="py-6" />
                       ) : (
                         (runs ?? []).map((r: { id: string; status: string; started_at: string }) => (
                           <div key={r.id} className="flex justify-between rounded-lg border border-border/40 p-3 text-sm">

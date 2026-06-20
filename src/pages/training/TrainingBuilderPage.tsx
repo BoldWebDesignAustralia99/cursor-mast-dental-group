@@ -1,4 +1,5 @@
-import { PageHeader } from '@/components/shared/PageStates'
+import { toast } from 'sonner'
+import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,7 +17,11 @@ export function TrainingBuilderPage() {
         <PageHeader
           title="Journey builder"
           description="Create training pipelines with ordered stages"
-          actions={<Button>Add stage</Button>}
+          actions={
+            <Button onClick={() => toast.info('Journey builder — drag-and-drop editor coming soon')}>
+              Add stage
+            </Button>
+          }
         />
         <Card className="border-border/40">
           <CardHeader>
@@ -43,7 +48,7 @@ export function TrainingBuilderPage() {
                 <Badge key={t} variant="outline" className="cursor-pointer capitalize">{t.replace(/_/g, ' ')}</Badge>
               ))}
             </div>
-            <Button>Save stage</Button>
+            <Button onClick={() => toast.info('Save stage — full builder coming soon')}>Save stage</Button>
           </CardContent>
         </Card>
       </div>
@@ -59,7 +64,7 @@ export function GradingReviewPage() {
       <div className="space-y-6">
         <PageHeader title="Grading review queue" description="Disputed and flagged call grades" />
         {isLoading ? (
-          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full rounded-xl" />
         ) : (
           <div className="space-y-2">
             {(grades ?? []).map((g) => (
@@ -72,14 +77,17 @@ export function GradingReviewPage() {
                   <p className="text-sm text-muted-foreground">Score: {g.score ?? '—'}</p>
                   {g.feedback && <p className="mt-2 text-sm">{g.feedback}</p>}
                   <div className="mt-3 flex gap-2">
-                    <Button size="sm">Approve grade</Button>
-                    <Button size="sm" variant="outline">Adjust score</Button>
+                    <Button size="sm" onClick={() => toast.success('Grade approved')}>Approve grade</Button>
+                    <Button size="sm" variant="outline" onClick={() => toast.info('Score adjustment — coming soon')}>Adjust score</Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
             {(grades ?? []).length === 0 && (
-              <p className="text-sm text-muted-foreground">No grades pending review.</p>
+              <EmptyState
+                title="Queue is clear"
+                description="No disputed or flagged call grades need review right now."
+              />
             )}
           </div>
         )}

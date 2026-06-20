@@ -27,8 +27,9 @@ import {
   PortalCallingPage,
 } from '@/pages/portal/PortalPages'
 import { OnlineBookingPage } from '@/pages/booking/OnlineBookingPage'
-import { isSupabaseConfigured } from '@/lib/demo'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 import { LoadingScreen } from '@/components/shared/PageStates'
+import { isSupabaseConfigured } from '@/lib/demo'
 
 function AuthRedirect({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, sessionReady } = useAuth()
@@ -85,9 +86,10 @@ function AppRoutes() {
         <Route path="portal/credits" element={<PortalCreditsPage />} />
         <Route path="portal/messages" element={<PortalMessagesPage />} />
         <Route path="portal/calling" element={<PortalCallingPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }

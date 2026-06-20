@@ -133,7 +133,7 @@ export function ClinicDetailPage() {
                 </div>
               ))}
               {(pmsLog ?? []).length === 0 && (
-                <p className="text-sm text-muted-foreground">No PMS sync events yet.</p>
+                <EmptyState title="No PMS sync events" description="Sync with Praktika to pull appointments and patient data." className="py-6" />
               )}
             </TabsContent>
           </Tabs>

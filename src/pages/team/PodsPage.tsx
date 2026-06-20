@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -51,7 +51,7 @@ export function PodsPage() {
                 {membersLoading ? (
                   <Skeleton className="m-4 h-24 w-full" />
                 ) : (members ?? []).length === 0 ? (
-                  <p className="p-4 text-sm text-muted-foreground">No members in this pod yet.</p>
+                  <EmptyState title="No members in this pod" description="Assign sales reps to this pod from team settings." className="py-6 m-4" />
                 ) : (
                   (members ?? []).map((m) => (
                     <div key={m.staff_profile_id} className="flex items-center justify-between p-4">

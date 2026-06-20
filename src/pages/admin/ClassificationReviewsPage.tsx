@@ -1,4 +1,4 @@
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -23,7 +23,9 @@ export function ClassificationReviewsPage() {
             <TabsTrigger value="all">All</TabsTrigger>
           </TabsList>
           <TabsContent value="pending" className="mt-4 space-y-2">
-            {isLoading ? <Skeleton className="h-32" /> : (
+            {isLoading ? <Skeleton className="h-32 rounded-xl" /> : (pending ?? []).length === 0 ? (
+              <EmptyState title="No pending reviews" description="Clinic classification disputes will appear here for QA." />
+            ) : (
               (pending ?? []).map((r: { id: string; patient_name: string; proposed_classification: string; created_at: string }) => (
                 <Card key={r.id} className="border-border/40">
                   <CardContent className="flex items-center justify-between p-4">
@@ -36,19 +38,20 @@ export function ClassificationReviewsPage() {
                 </Card>
               ))
             )}
-            {(pending ?? []).length === 0 && !isLoading && (
-              <p className="text-sm text-muted-foreground">No pending reviews.</p>
-            )}
           </TabsContent>
           <TabsContent value="all" className="mt-4 space-y-2">
-            {(all ?? []).map((r: { id: string; patient_name: string; status: string }) => (
-              <Card key={r.id} className="border-border/40">
-                <CardContent className="flex justify-between p-4 text-sm">
-                  <span>{r.patient_name}</span>
-                  <Badge variant="secondary">{r.status}</Badge>
-                </CardContent>
-              </Card>
-            ))}
+            {(all ?? []).length === 0 ? (
+              <EmptyState title="No reviews yet" description="Classification review history will appear here." />
+            ) : (
+              (all ?? []).map((r: { id: string; patient_name: string; status: string }) => (
+                <Card key={r.id} className="border-border/40">
+                  <CardContent className="flex justify-between p-4 text-sm">
+                    <span>{r.patient_name}</span>
+                    <Badge variant="secondary">{r.status}</Badge>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
         </Tabs>
       </div>

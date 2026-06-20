@@ -1,5 +1,5 @@
 import { PermissionGate } from '@/components/auth/PermissionGate'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState, ErrorState } from '@/components/shared/PageStates'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -7,14 +7,22 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useTrainingJourneys } from '@/hooks/useWorkflows'
 
 export function TrainingPage() {
-  const { data: journeys, isLoading } = useTrainingJourneys()
+  const { data: journeys, isLoading, isError, refetch } = useTrainingJourneys()
 
   return (
     <PermissionGate permission="training.view">
       <div className="space-y-6">
         <PageHeader title="Training" description="Your onboarding journey and skill development" />
-        {isLoading ? (
-          <Skeleton className="h-48 w-full" />
+        {isError && (
+          <ErrorState message="Could not load training journeys." onRetry={() => void refetch()} />
+        )}
+        {isLoading && !isError ? (
+          <Skeleton className="h-48 w-full rounded-xl" />
+        ) : (journeys ?? []).length === 0 ? (
+          <EmptyState
+            title="No training assigned yet"
+            description="Your manager will assign onboarding journeys. Check back soon or ask your team lead."
+          />
         ) : (
           (journeys ?? []).map((j: { journey_id: string; journey_name: string; total_stages: number; completed_stages: number }) => {
             const pct = j.total_stages ? Math.round((j.completed_stages / j.total_stages) * 100) : 0

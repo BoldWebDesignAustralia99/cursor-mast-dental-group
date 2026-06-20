@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ErrorState } from '@/components/shared/PageStates'
+import { ErrorState, EmptyState } from '@/components/shared/PageStates'
 import { cn } from '@/lib/utils'
 import { LiveCopilotPanel } from '@/components/calls/LiveCopilotPanel'
 import { StageActionPanel } from '@/components/calls/StageActionPanel'
@@ -152,7 +152,7 @@ function MiniCalendar({
 export function LeadRecordPage() {
   const { id = DEMO_LEAD_ID } = useParams()
   const navigate = useNavigate()
-  const { data: lead, isLoading } = useLead(id)
+  const { data: lead, isLoading, isError, refetch } = useLead(id)
   const { data: stages } = useCallFlowStages()
   const { data: notes } = useLeadNotes(id)
   const { data: clinics } = useSuggestedClinics(id)
@@ -295,6 +295,28 @@ export function LeadRecordPage() {
     )
   }
 
+  if (isError) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background p-6">
+        <ErrorState message="Could not load this lead." onRetry={() => void refetch()} className="max-w-md" />
+      </div>
+    )
+  }
+
+  if (!isLoading && !lead) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background p-6">
+        <ErrorState
+          title="Lead not found"
+          message="This lead may have been removed or you don't have access."
+          retryLabel="Back to dashboard"
+          onRetry={() => navigate('/dashboard')}
+          className="max-w-md"
+        />
+      </div>
+    )
+  }
+
   if (isLoading || !lead) {
     return (
       <div className="flex h-screen bg-background">
@@ -385,6 +407,43 @@ export function LeadRecordPage() {
             </div>
           </div>
         </header>
+
+        {/* Mobile: call flow stages + lead context */}
+        <div className="shrink-0 border-b border-border/40 lg:hidden">
+          <div className="flex gap-1 overflow-x-auto px-4 py-2">
+            {stages?.map((stage, i) => (
+              <Button
+                key={stage.id}
+                type="button"
+                variant={i === activeStage ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-8 shrink-0 gap-1.5 px-2 text-xs"
+                onClick={() => setActiveStage(i)}
+              >
+                <span
+                  className={cn(
+                    'flex size-4 items-center justify-center rounded-full text-[9px] font-medium',
+                    completedStages.has(i)
+                      ? 'bg-accent-emerald text-accent-emerald-foreground'
+                      : i === activeStage
+                        ? 'bg-foreground text-background'
+                        : 'bg-muted text-muted-foreground',
+                  )}
+                >
+                  {completedStages.has(i) ? '✓' : i + 1}
+                </span>
+                <span className="max-w-[5rem] truncate">{stage.name}</span>
+              </Button>
+            ))}
+          </div>
+          {(lead.treatment_interest || lead.funding_type) && (
+            <div className="flex flex-wrap gap-2 px-4 pb-3 text-xs text-muted-foreground">
+              {lead.treatment_interest && <Badge variant="outline">{lead.treatment_interest}</Badge>}
+              {lead.funding_type && <Badge variant="outline">{lead.funding_type}</Badge>}
+              {lead.decision_maker && <span>With: {lead.decision_maker}</span>}
+            </div>
+          )}
+        </div>
 
         {/* 3-column body */}
         <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[240px_1fr_320px]">
@@ -519,7 +578,14 @@ export function LeadRecordPage() {
                   </Button>
                 </div>
                 <ul className="space-y-3">
-                  {notes?.map((note) => (
+                  {(notes ?? []).length === 0 ? (
+                    <EmptyState
+                      title="No notes yet"
+                      description="Add notes during the call — AI summaries appear here after you hang up."
+                      className="py-6"
+                    />
+                  ) : (
+                    notes?.map((note) => (
                     <li key={note.id} className="flex gap-3">
                       <span className="mt-2 size-1.5 shrink-0 rounded-full bg-border" />
                       <div>
@@ -533,7 +599,8 @@ export function LeadRecordPage() {
                         </p>
                       </div>
                     </li>
-                  ))}
+                    ))
+                  )}
                 </ul>
               </div>
             </div>

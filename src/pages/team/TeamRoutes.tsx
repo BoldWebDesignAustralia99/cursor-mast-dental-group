@@ -3,6 +3,7 @@ import { TeamPage } from '@/pages/team/TeamPage'
 import { MessagesPage, CommunityPage, TimesheetPage, LeavePage, PayrollPage } from '@/pages/team/MessagesPage'
 import { PodsPage } from '@/pages/team/PodsPage'
 import { CoachingPage } from '@/pages/team/CoachingPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 
 export function TeamRoutes() {
   return (
@@ -15,6 +16,7 @@ export function TeamRoutes() {
       <Route path="payroll" element={<PayrollPage />} />
       <Route path="pods" element={<PodsPage />} />
       <Route path="coaching" element={<CoachingPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

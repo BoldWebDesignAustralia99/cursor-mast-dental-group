@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from 'date-fns'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -83,9 +83,9 @@ export function CommsInboxPage() {
                 </Badge>
               </div>
             ))}
-            {(messages ?? []).length === 0 && (
-              <p className="p-4 text-sm text-muted-foreground">No inbound clinic messages.</p>
-            )}
+            {(messages ?? []).length === 0 ? (
+              <EmptyState title="Inbox is empty" description="Inbound clinic messages will appear here." className="m-4" />
+            ) : null}
           </div>
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -34,13 +34,21 @@ export function AdminChatPage() {
         <Card className="border-border/40">
           <ScrollArea className="h-96 p-4">
             <div className="space-y-4">
-              {messages.map((m, i) => (
-                <div key={i} className={m.role === 'user' ? 'text-right' : ''}>
-                  <div className={`inline-block rounded-lg px-3 py-2 text-sm ${m.role === 'user' ? 'bg-foreground text-background' : 'bg-muted'}`}>
-                    {m.text}
+              {messages.length === 0 ? (
+                <EmptyState
+                  title="Ask anything about your business"
+                  description="Try: “How many bookings today?” or “Which clinic has the lowest credits?”"
+                  className="py-8"
+                />
+              ) : (
+                messages.map((m, i) => (
+                  <div key={i} className={m.role === 'user' ? 'text-right' : ''}>
+                    <div className={`inline-block rounded-lg px-3 py-2 text-sm ${m.role === 'user' ? 'bg-foreground text-background' : 'bg-muted'}`}>
+                      {m.text}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </ScrollArea>
           <CardContent className="flex gap-2 border-t border-border/40 pt-4">
