@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState, ErrorState } from '@/components/shared/PageStates'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { useLeadsList } from '@/hooks/useLeads'
@@ -20,8 +20,9 @@ import { PAGE_SIZE } from '@/lib/constants'
 export function LeadsListPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useLeadsList(search, null, page)
+  const { data, isLoading, isError, refetch } = useLeadsList(search, null, page)
   const totalPages = Math.ceil((data?.total ?? 0) / PAGE_SIZE)
+  const rows = data?.rows ?? []
 
   return (
     <PermissionGate permission="leads.manage">
@@ -38,9 +39,28 @@ export function LeadsListPage() {
           className="max-w-sm"
         />
 
-        {isLoading ? (
+        {isError && (
+          <ErrorState message="Could not load leads." onRetry={() => void refetch()} />
+        )}
+
+        {isLoading && !isError && (
           <Skeleton className="h-64 w-full rounded-xl" />
-        ) : (
+        )}
+
+        {!isLoading && !isError && rows.length === 0 && (
+          <EmptyState
+            title={search ? 'No matching leads' : 'No leads yet'}
+            description={
+              search
+                ? `Nothing matched "${search}". Try a different name, phone, or suburb.`
+                : 'Leads from Facebook, webhooks, and imports will appear here.'
+            }
+            actionLabel={search ? 'Clear search' : undefined}
+            onAction={search ? () => { setSearch(''); setPage(1) } : undefined}
+          />
+        )}
+
+        {!isLoading && !isError && rows.length > 0 && (
           <>
             <div className="hidden rounded-xl border border-border/40 md:block">
               <Table>
@@ -55,7 +75,7 @@ export function LeadsListPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.rows.map((lead) => (
+                  {rows.map((lead) => (
                     <TableRow key={lead.id} className="cursor-pointer">
                       <TableCell>
                         <Link to={`/leads/${lead.id}`} className="font-medium hover:underline">
@@ -73,9 +93,8 @@ export function LeadsListPage() {
               </Table>
             </div>
 
-            {/* Mobile cards */}
             <div className="space-y-2 md:hidden">
-              {data?.rows.map((lead) => (
+              {rows.map((lead) => (
                 <Link
                   key={lead.id}
                   to={`/leads/${lead.id}`}

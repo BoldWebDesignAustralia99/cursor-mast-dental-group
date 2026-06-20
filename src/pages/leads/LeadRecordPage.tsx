@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Sparkles, MoreHorizontal, ArrowRight, LogOut } from 'lucide-react'
+import { Sparkles, MoreHorizontal, PhoneOff } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   format,
@@ -15,10 +15,6 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  Mic,
-  MicOff,
-  Pause,
-  PhoneOff,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { FocusRail } from '@/components/layout/FocusRail'
@@ -27,6 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/shared/PageStates'
 import { cn } from '@/lib/utils'
 import { LiveCopilotPanel } from '@/components/calls/LiveCopilotPanel'
 import { StageActionPanel } from '@/components/calls/StageActionPanel'
@@ -54,13 +51,14 @@ import {
   DEMO_LEAD_ID,
 } from '@/hooks/useLeads'
 
-function CallTimer({ targetMinutes = 30 }: { targetMinutes?: number }) {
-  const [seconds, setSeconds] = useState(310)
+function CallTimer({ isLive, targetMinutes = 30 }: { isLive: boolean; targetMinutes?: number }) {
+  const [seconds, setSeconds] = useState(0)
 
   useEffect(() => {
+    if (!isLive) return
     const interval = setInterval(() => setSeconds((s) => s + 1), 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [isLive])
 
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
@@ -285,8 +283,14 @@ export function LeadRecordPage() {
 
   if (accessDenied) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <p className="text-sm text-muted-foreground">This lead is not in your pod. Use Start Work from the dashboard.</p>
+      <div className="flex h-screen items-center justify-center bg-background p-6">
+        <ErrorState
+          title="Lead not in your pod"
+          message="This lead belongs to another sales pod. Use Start Work on the dashboard to get your next allocated lead."
+          retryLabel="Back to dashboard"
+          onRetry={() => navigate('/dashboard')}
+          className="max-w-md"
+        />
       </div>
     )
   }
@@ -295,8 +299,14 @@ export function LeadRecordPage() {
     return (
       <div className="flex h-screen bg-background">
         <FocusRail />
-        <div className="flex flex-1 items-center justify-center">
-          <Skeleton className="h-8 w-48" />
+        <div className="flex flex-1 flex-col gap-4 p-6">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-4 w-48" />
+          <div className="grid flex-1 gap-4 lg:grid-cols-3">
+            <Skeleton className="hidden lg:block" />
+            <Skeleton className="lg:col-span-1" />
+            <Skeleton className="hidden lg:block" />
+          </div>
         </div>
       </div>
     )
@@ -308,14 +318,14 @@ export function LeadRecordPage() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/40 px-5">
-          <div className="min-w-0">
+        <header className="flex shrink-0 flex-col gap-3 border-b border-border/40 px-4 py-3 sm:px-5 lg:h-14 lg:flex-row lg:items-center lg:justify-between lg:py-0">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3">
               <h1 className="truncate text-base font-semibold tracking-tight">
                 {lead.first_name} {lead.last_name}
               </h1>
               {lead.treatment_interest && (
-                <Badge variant="secondary" className="shrink-0 font-normal">
+                <Badge variant="secondary" className="hidden shrink-0 font-normal sm:inline-flex">
                   {lead.treatment_interest}
                 </Badge>
               )}
@@ -325,74 +335,54 @@ export function LeadRecordPage() {
             </p>
           </div>
 
-          <CallTimer targetMinutes={30} />
+          <div className="flex items-center justify-between gap-2 lg:justify-end">
+            <CallTimer isLive={call.isLive} targetMinutes={30} />
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 gap-2"
-              onClick={() => void releaseAndNavigate('/dashboard', 'next_lead').then(() => {
-                // parent will use Start Work again
-              })}
-            >
-              <ArrowRight className="size-3.5" />
-              Next lead
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 gap-2"
-              onClick={() => void releaseAndNavigate('/dashboard', 'leave')}
-            >
-              <LogOut className="size-3.5" />
-              Leave
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-9">
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {stages?.map((stage, i) => (
-                  <DropdownMenuItem key={stage.id} onClick={() => jumpToStage(i)}>
-                    Jump to {stage.name}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 gap-2"
+                onClick={() => setCopilotOpen(true)}
+              >
+                <Sparkles className="size-3.5" />
+                <span className="hidden sm:inline">Copilot</span>
+              </Button>
+              <Button variant="destructive" size="sm" className="h-9 gap-2" onClick={handleEndCall}>
+                <PhoneOff className="size-3.5" />
+                <span className="hidden sm:inline">End call</span>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="size-9">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => call.toggleMute()}>
+                    {call.muted ? 'Unmute' : 'Mute'}
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 gap-2"
-              onClick={() => setCopilotOpen(true)}
-            >
-              <Sparkles className="size-3.5" />
-              Copilot
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn('h-9 gap-2', call.muted && 'bg-accent')}
-              onClick={() => call.toggleMute()}
-            >
-              {call.muted ? <MicOff className="size-3.5" /> : <Mic className="size-3.5" />}
-              Mute
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn('h-9 gap-2', call.onHold && 'bg-accent')}
-              onClick={() => call.toggleHold()}
-            >
-              <Pause className="size-3.5" />
-              Hold
-            </Button>
-            <Button variant="destructive" size="sm" className="h-9 gap-2" onClick={handleEndCall}>
-              <PhoneOff className="size-3.5" />
-              End call
-            </Button>
+                  <DropdownMenuItem onClick={() => call.toggleHold()}>
+                    {call.onHold ? 'Resume' : 'Hold'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => void releaseAndNavigate('/dashboard', 'next_lead')}
+                  >
+                    Next lead
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => void releaseAndNavigate('/dashboard', 'leave')}
+                  >
+                    Leave record
+                  </DropdownMenuItem>
+                  {stages?.map((stage, i) => (
+                    <DropdownMenuItem key={stage.id} onClick={() => jumpToStage(i)}>
+                      Jump to {stage.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </header>
 

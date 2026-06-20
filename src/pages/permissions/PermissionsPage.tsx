@@ -121,7 +121,7 @@ export function PermissionsPage() {
               )}
 
               {Array.from(filteredModules.entries()).map(([module, moduleKeys]) => (
-                <Card key={module}>
+                <Card key={module} className="border-border/40">
                   <CardHeader>
                     <CardTitle className="capitalize text-base">
                       {module.replace(/_/g, ' ')}

@@ -159,7 +159,7 @@ export function SettingsPage() {
             </TabsList>
             {categories.map((cat) => (
               <TabsContent key={cat} value={cat}>
-                <Card>
+                <Card className="border-border/40">
                   <CardHeader>
                     <CardTitle className="capitalize">
                       {cat.replace(/_/g, ' ')} settings
@@ -184,7 +184,7 @@ export function SettingsPage() {
         )}
 
         {settings && settings.length === 0 && (
-          <Card>
+          <Card className="border-border/40">
             <CardContent className="py-8 text-center text-muted-foreground">
               No settings configured yet. Run database migrations to seed defaults.
             </CardContent>

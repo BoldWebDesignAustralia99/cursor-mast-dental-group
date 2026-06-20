@@ -1,7 +1,7 @@
 import { Play, Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthProvider'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, ErrorState } from '@/components/shared/PageStates'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { useStartWork } from '@/hooks/useStartWork'
 
 export function DashboardPage() {
   const { profile } = useAuth()
-  const { data: stats, isLoading } = useDashboardStats()
+  const { data: stats, isLoading, isError, refetch } = useDashboardStats()
   const startWork = useStartWork()
   const startReactivation = useStartWork()
 
@@ -31,6 +31,13 @@ export function DashboardPage() {
           title={`Good ${new Date().getHours() < 12 ? 'morning' : 'afternoon'}, ${profile?.full_name?.split(' ')[0] ?? 'there'}`}
           description={`${profile ? ROLE_LABELS[profile.role] : ''} · ${formatDate()}`}
         />
+
+        {isError && (
+          <ErrorState
+            message="Could not load dashboard stats."
+            onRetry={() => void refetch()}
+          />
+        )}
 
         {/* Start Work — the revenue lever */}
         <PermissionGate permission="calls.make">

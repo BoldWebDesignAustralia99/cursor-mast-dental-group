@@ -1,13 +1,13 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, ErrorState, EmptyState } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useClinicsList } from '@/hooks/useDashboard'
+import { useClinic } from '@/hooks/useDashboard'
 import { useClinicTimeline, useClinicOnboarding, useClinicLedger } from '@/hooks/useBookings'
 import { api } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
@@ -17,8 +17,8 @@ import { useState } from 'react'
 
 export function ClinicDetailPage() {
   const { id } = useParams()
-  const { data } = useClinicsList(null, 1)
-  const clinic = data?.rows.find((c) => c.id === id) ?? data?.rows[0]
+  const navigate = useNavigate()
+  const { data: clinic, isLoading, isError, refetch } = useClinic(id)
   const { data: timeline, isLoading: tlLoading } = useClinicTimeline(clinic?.id)
   const { data: onboarding } = useClinicOnboarding(clinic?.id)
   const { data: ledger } = useClinicLedger(clinic?.id)
@@ -55,7 +55,24 @@ export function ClinicDetailPage() {
     }
   }
 
-  if (!clinic) return <Skeleton className="h-64 w-full" />
+  if (isLoading) return <Skeleton className="h-64 w-full rounded-xl" />
+
+  if (isError) {
+    return (
+      <ErrorState message="Could not load this clinic." onRetry={() => void refetch()} />
+    )
+  }
+
+  if (!clinic) {
+    return (
+      <ErrorState
+        title="Clinic not found"
+        message="This clinic may have been removed or you may not have access."
+        retryLabel="Back to clinics"
+        onRetry={() => navigate('/clinics')}
+      />
+    )
+  }
 
   return (
     <PermissionGate permission="clinics.view">
@@ -74,7 +91,9 @@ export function ClinicDetailPage() {
               <TabsTrigger value="pms">PMS sync</TabsTrigger>
             </TabsList>
             <TabsContent value="timeline" className="mt-4 space-y-2">
-              {tlLoading ? <Skeleton className="h-24" /> : (
+              {tlLoading ? <Skeleton className="h-24" /> : (timeline ?? []).length === 0 ? (
+                <EmptyState title="No timeline events" description="Activity for this clinic will appear here." />
+              ) : (
                 (timeline ?? []).map((e: { id?: string; item_type?: string; summary: string; created_at: string }, i: number) => (
                   <Card key={e.id ?? i} className="border-border/40">
                     <CardContent className="flex justify-between p-3 text-sm">
@@ -123,8 +142,8 @@ export function ClinicDetailPage() {
           <Card className="border-border/40">
             <CardHeader><CardTitle className="text-base">Actions</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full">Call clinic</Button>
-              <Button variant="outline" className="w-full">Send SMS</Button>
+              <Button variant="outline" className="w-full" onClick={() => toast.info('Clinic calling — configure Twilio in Integrations')}>Call clinic</Button>
+              <Button variant="outline" className="w-full" onClick={() => toast.info('SMS — open Comms inbox to message this clinic')}>Send SMS</Button>
               <Button variant="outline" className="w-full" onClick={() => void handleDraftReply()}>Draft reply with AI</Button>
             </CardContent>
           </Card>

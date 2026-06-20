@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { PageHeader } from '@/components/shared/PageStates'
+import { PageHeader, EmptyState } from '@/components/shared/PageStates'
 import { PermissionGate } from '@/components/auth/PermissionGate'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -33,9 +33,10 @@ export function CoachingPage() {
               </Card>
             ))}
             {(sessions ?? []).length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No coaching sessions yet. The daily `process-coaching` job generates these from call transcripts.
-              </p>
+              <EmptyState
+                title="No coaching sessions yet"
+                description="Daily coaching summaries are generated automatically from recent call transcripts."
+              />
             )}
           </div>
         )}

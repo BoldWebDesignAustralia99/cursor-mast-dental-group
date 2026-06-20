@@ -28,6 +28,7 @@ import {
 } from '@/pages/portal/PortalPages'
 import { OnlineBookingPage } from '@/pages/booking/OnlineBookingPage'
 import { isSupabaseConfigured } from '@/lib/demo'
+import { LoadingScreen } from '@/components/shared/PageStates'
 
 function AuthRedirect({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, sessionReady } = useAuth()
@@ -37,7 +38,7 @@ function AuthRedirect({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
-  if (!sessionReady || isLoading) return null
+  if (!sessionReady || isLoading) return <LoadingScreen message="Checking your session…" />
   if (!isAuthenticated) return <Navigate to="/login" replace />
 
   return <>{children}</>

@@ -14,7 +14,7 @@ import { useAuth } from '@/providers/AuthProvider'
 
 const RAIL_ITEMS = [
   { icon: Home, href: '/dashboard', label: 'Home' },
-  { icon: Phone, href: '/calls/queue', label: 'Calls', active: true },
+  { icon: Phone, href: '/dashboard', label: 'Calls' },
   { icon: LayoutDashboard, href: '/leads', label: 'Leads' },
   { icon: MessageSquare, href: '/team/messages', label: 'Messages' },
   { icon: Wallet, href: '/clinics', label: 'Clinics' },
@@ -32,9 +32,11 @@ export function FocusRail() {
       </div>
       <nav className="flex flex-1 flex-col items-center gap-0.5">
         {RAIL_ITEMS.map((item) => {
-          const isActive =
-            item.active ||
-            location.pathname.startsWith(item.href)
+          const isActive = location.pathname === item.href
+            || (item.href === '/leads' && location.pathname.startsWith('/leads'))
+            || (item.href === '/dashboard' && (location.pathname.startsWith('/calls') || location.pathname.startsWith('/dashboard')))
+            || (item.href === '/clinics' && location.pathname.startsWith('/clinics'))
+            || (item.href === '/team/messages' && location.pathname.startsWith('/team'))
           return (
             <Button
               key={item.href}

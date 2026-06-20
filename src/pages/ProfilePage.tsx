@@ -17,7 +17,7 @@ export function ProfilePage() {
         description="Your account details and display preferences"
       />
 
-      <Card>
+      <Card className="border-border/40">
         <CardHeader>
           <CardTitle>Account</CardTitle>
         </CardHeader>
@@ -39,7 +39,7 @@ export function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border/40">
         <CardHeader>
           <CardTitle>Display</CardTitle>
         </CardHeader>

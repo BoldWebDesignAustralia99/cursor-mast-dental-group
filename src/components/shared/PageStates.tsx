@@ -1,6 +1,19 @@
-import { AlertCircle, Inbox } from 'lucide-react'
+import { AlertCircle, Inbox, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+
+export function LoadingScreen({ message = 'Loading…' }: { message?: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="space-y-4 text-center">
+        <Loader2 className="mx-auto size-8 animate-spin text-muted-foreground" />
+        <Skeleton className="mx-auto h-2 w-32" />
+        <p className="text-sm text-muted-foreground">{message}</p>
+      </div>
+    </div>
+  )
+}
 
 interface EmptyStateProps {
   title: string

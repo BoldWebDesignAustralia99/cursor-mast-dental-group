@@ -9,7 +9,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
-import { commandSearchItems } from '@/lib/navigation'
+import { getCommandSearchItems } from '@/lib/navigation'
 import { useMyPermissions } from '@/hooks/usePermissions'
 
 interface CommandSearchProps {
@@ -26,6 +26,7 @@ export function CommandSearch({ open: controlledOpen, onOpenChange }: CommandSea
   const allowed = new Set(
     permissions?.filter((p) => p.allowed).map((p) => p.permission_key) ?? [],
   )
+  const searchItems = getCommandSearchItems(allowed)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -49,7 +50,7 @@ export function CommandSearch({ open: controlledOpen, onOpenChange }: CommandSea
       <CommandList>
         <CommandEmpty>No results found. Try a different search term.</CommandEmpty>
         <CommandGroup heading="Pages">
-          {commandSearchItems.map((item) => (
+          {searchItems.map((item) => (
             <CommandItem
               key={item.href}
               value={`${item.title} ${item.keywords.join(' ')}`}

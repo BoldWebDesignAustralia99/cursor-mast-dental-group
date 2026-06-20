@@ -122,6 +122,31 @@ export function useClinicsList(stage: string | null, page = 1) {
   })
 }
 
+export function useClinic(id: string | undefined) {
+  return useQuery({
+    queryKey: ['clinic', id],
+    enabled: Boolean(id),
+    queryFn: async (): Promise<ClinicRow | null> => {
+      if (isDemoModeEnabled()) {
+        const demo = [
+          { id: '1', name: 'Mast Dental Moorooka', suburb: 'Moorooka', stage: 'active', credit_balance: 45, country: 'AU', is_active: true },
+          { id: '2', name: 'Mast Dental Chermside', suburb: 'Chermside', stage: 'active', credit_balance: 12, country: 'AU', is_active: true },
+          { id: '3', name: 'Mast Dental North Lakes', suburb: 'North Lakes', stage: 'active', credit_balance: 8, country: 'AU', is_active: true },
+        ]
+        return demo.find((c) => c.id === id) ?? null
+      }
+
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('id, name, suburb, stage, credit_balance, country, is_active')
+        .eq('id', id!)
+        .maybeSingle()
+      if (error) throw error
+      return data as ClinicRow | null
+    },
+  })
+}
+
 export function useNotifications(page = 1) {
   return useQuery({
     queryKey: ['notifications', page],
