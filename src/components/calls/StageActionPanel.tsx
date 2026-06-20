@@ -4,22 +4,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { cn } from '@/lib/utils'
 import { MouthMap } from '@/components/calls/MouthMap'
-import type { SuggestedClinic, TimeSlot } from '@/hooks/useLeads'
 
 interface StageActionPanelProps {
   stageName: string
-  clinics?: SuggestedClinic[]
-  slots?: TimeSlot[]
-  selectedClinicId: string | null
-  selectedSlot: string | null
-  selectedDate: Date
-  onSelectClinic: (id: string) => void
-  onSelectSlot: (slot: string) => void
-  onBook: () => void
-  bookingPending?: boolean
-  calendar: React.ReactNode
 }
 
 const OBJECTIONS = [
@@ -28,18 +16,7 @@ const OBJECTIONS = [
   { q: 'Already got a quote', a: 'Great — our consult gives you a second opinion with 3D imaging at no extra cost beyond the deposit.' },
 ]
 
-export function StageActionPanel({
-  stageName,
-  clinics,
-  slots,
-  selectedClinicId,
-  selectedSlot,
-  onSelectClinic,
-  onSelectSlot,
-  onBook,
-  bookingPending,
-  calendar,
-}: StageActionPanelProps) {
+export function StageActionPanel({ stageName }: StageActionPanelProps) {
   const [teeth, setTeeth] = useState<Record<number, 'healthy' | 'missing' | 'broken' | 'diseased'>>({})
   const [income, setIncome] = useState('')
   const [funding, setFunding] = useState<string[]>([])
@@ -150,85 +127,25 @@ export function StageActionPanel({
     )
   }
 
-  if (normalized.includes('book') || normalized.includes('sell')) {
+  if (normalized.includes('sell')) {
     return (
-      <div className="space-y-5">
-        {normalized.includes('sell') && (
-          <div className="rounded-xl border border-border/40 bg-card/50 p-4">
-            <p className="text-sm font-medium">Dr Evelyn Chin</p>
-            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              Implant specialist · 15+ years · All-on-X certified
-            </p>
-          </div>
-        )}
-        <div>
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Choose clinic
-          </p>
-          <div className="space-y-2">
-            {clinics?.map((clinic) => (
-              <Button
-                key={clinic.clinic_id}
-                type="button"
-                variant="outline"
-                onClick={() => onSelectClinic(clinic.clinic_id)}
-                className={cn(
-                  'h-auto w-full flex-col items-start rounded-lg p-3 text-left font-normal',
-                  selectedClinicId === clinic.clinic_id
-                    ? 'border-accent-emerald/40 bg-accent-emerald/10 ring-1 ring-accent-emerald/20'
-                    : 'border-border/40',
-                )}
-              >
-                <p className="text-sm font-medium">{clinic.clinic_name}</p>
-                <p className="text-xs text-muted-foreground tabular-nums">
-                  {clinic.distance_km} km · {clinic.drive_time_min} min
-                </p>
-              </Button>
-            ))}
-          </div>
-        </div>
-        {normalized.includes('book') && (
-          <>
-            <div>
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Choose a day
-              </p>
-              {calendar}
-            </div>
-            <div>
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Pick a time
-              </p>
-              <div className="space-y-1.5">
-                {slots?.map((slot) => (
-                  <Button
-                    key={slot.slot_start}
-                    type="button"
-                    variant="outline"
-                    onClick={() => onSelectSlot(slot.slot_start)}
-                    className={cn(
-                      'h-auto w-full justify-between rounded-lg px-3 py-2 font-normal',
-                      selectedSlot === slot.slot_start
-                        ? 'border-accent-emerald/40 bg-accent-emerald/10'
-                        : 'border-border/40',
-                    )}
-                  >
-                    <span className="text-sm font-medium tabular-nums">{slot.label}</span>
-                    <span className="text-xs text-muted-foreground">{slot.practitioner_name}</span>
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <Button
-              className="w-full bg-accent-emerald text-accent-emerald-foreground hover:bg-accent-emerald/90"
-              disabled={!selectedSlot || bookingPending}
-              onClick={onBook}
-            >
-              Book appointment
-            </Button>
-          </>
-        )}
+      <div className="rounded-xl border border-border/40 bg-card/50 p-4">
+        <p className="text-sm font-medium">Dr Evelyn Chin</p>
+        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+          Implant specialist · 15+ years · All-on-X certified
+        </p>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Use the Clinics tab on the left rail to compare locations before booking.
+        </p>
       </div>
+    )
+  }
+
+  if (normalized.includes('book')) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Use the booking panel on the right to choose clinic, date, and time.
+      </p>
     )
   }
 

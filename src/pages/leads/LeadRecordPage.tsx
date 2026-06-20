@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Sparkles, MoreHorizontal, PhoneOff } from 'lucide-react'
+import { Sparkles, MoreHorizontal, PhoneOff, X } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   format,
@@ -17,7 +17,8 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { FocusRail } from '@/components/layout/FocusRail'
+import { LeadFocusRail, type LeadRailTab } from '@/components/calls/LeadFocusRail'
+import { BookingPanel } from '@/components/calls/BookingPanel'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -168,6 +169,7 @@ export function LeadRecordPage() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [copilotOpen, setCopilotOpen] = useState(true)
   const [lockHeld, setLockHeld] = useState(false)
+  const [railTab, setRailTab] = useState<LeadRailTab>('flow')
 
   const call = useTwilioCall({
     leadId: id,
@@ -225,6 +227,11 @@ export function LeadRecordPage() {
   const { data: slots } = useAvailableSlots(clinicId, dateStr)
 
   const currentStage = stages?.[activeStage]
+  const isBookStage = currentStage?.name.toLowerCase().includes('book') ?? false
+
+  const handleClose = () => {
+    void releaseAndNavigate('/dashboard', 'leave')
+  }
 
   const handleAddNote = () => {
     if (!noteText.trim()) return
@@ -320,7 +327,7 @@ export function LeadRecordPage() {
   if (isLoading || !lead) {
     return (
       <div className="flex h-screen bg-background">
-        <FocusRail />
+        <LeadFocusRail activeTab={railTab} onTabChange={setRailTab} onClose={handleClose} />
         <div className="flex flex-1 flex-col gap-4 p-6">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-4 w-48" />
@@ -336,7 +343,7 @@ export function LeadRecordPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <FocusRail />
+      <LeadFocusRail activeTab={railTab} onTabChange={setRailTab} onClose={handleClose} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Top bar */}
@@ -361,6 +368,15 @@ export function LeadRecordPage() {
             <CallTimer isLive={call.isLive} targetMinutes={30} />
 
             <div className="flex items-center gap-1.5 sm:gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-2 text-muted-foreground"
+                onClick={handleClose}
+              >
+                <X className="size-3.5" />
+                <span className="hidden sm:inline">Close</span>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -446,74 +462,161 @@ export function LeadRecordPage() {
         </div>
 
         {/* 3-column body */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[240px_1fr_320px]">
-          {/* Left: call flow + lead summary */}
-          <aside className="hidden border-r border-border/40 lg:flex lg:flex-col">
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[260px_1fr_340px]">
+          {/* Left: rail-driven lead panels */}
+          <aside className="hidden border-r border-border/40 lg:flex lg:flex-col lg:overflow-hidden">
             <ScrollArea className="flex-1">
               <div className="p-4">
-                <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Call flow
-                </p>
-                <ol className="space-y-0.5">
-                  {stages?.map((stage, i) => (
-                    <li key={stage.id}>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => setActiveStage(i)}
-                        className={cn(
-                          'h-auto w-full items-start justify-start gap-3 rounded-sm px-2 py-1.5 text-left font-normal',
-                          i === activeStage && 'bg-accent',
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-medium',
-                            completedStages.has(i)
-                              ? 'bg-accent-emerald text-accent-emerald-foreground'
-                              : i === activeStage
-                                ? 'bg-foreground text-background'
-                                : 'bg-muted text-muted-foreground',
-                          )}
-                        >
-                          {completedStages.has(i) ? '✓' : i + 1}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium leading-tight">{stage.name}</p>
-                          {stage.time_range && (
-                            <p className="text-[11px] text-muted-foreground">{stage.time_range}</p>
-                          )}
-                        </div>
-                      </Button>
-                    </li>
-                  ))}
-                </ol>
+                {railTab === 'flow' && (
+                  <>
+                    <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Call flow
+                    </p>
+                    <ol className="space-y-0.5">
+                      {stages?.map((stage, i) => (
+                        <li key={stage.id}>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setActiveStage(i)}
+                            className={cn(
+                              'h-auto w-full items-start justify-start gap-3 rounded-sm px-2 py-1.5 text-left font-normal',
+                              i === activeStage && 'bg-accent',
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-medium',
+                                completedStages.has(i)
+                                  ? 'bg-accent-emerald text-accent-emerald-foreground'
+                                  : i === activeStage
+                                    ? 'bg-foreground text-background'
+                                    : 'bg-muted text-muted-foreground',
+                              )}
+                            >
+                              {completedStages.has(i) ? '✓' : i + 1}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium leading-tight">{stage.name}</p>
+                              {stage.time_range && (
+                                <p className="text-[11px] text-muted-foreground">{stage.time_range}</p>
+                              )}
+                            </div>
+                          </Button>
+                        </li>
+                      ))}
+                    </ol>
+                  </>
+                )}
 
-                <div className="mt-6 rounded-lg border border-border/40 p-3">
-                  <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Lead
-                  </p>
-                  <dl className="space-y-2 text-sm">
-                    {lead.treatment_interest && (
+                {railTab === 'lead' && (
+                  <>
+                    <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Lead profile
+                    </p>
+                    <dl className="space-y-3 text-sm">
                       <div>
-                        <dt className="text-muted-foreground">Wants</dt>
-                        <dd>{lead.treatment_interest}</dd>
+                        <dt className="text-xs text-muted-foreground">Name</dt>
+                        <dd className="font-medium">{lead.first_name} {lead.last_name}</dd>
                       </div>
-                    )}
-                    {lead.funding_type && (
                       <div>
-                        <dt className="text-muted-foreground">Funding</dt>
-                        <dd>{lead.funding_type}</dd>
+                        <dt className="text-xs text-muted-foreground">Phone</dt>
+                        <dd className="tabular-nums">{lead.phone}</dd>
                       </div>
-                    )}
-                    {lead.decision_maker && (
+                      {lead.email && (
+                        <div>
+                          <dt className="text-xs text-muted-foreground">Email</dt>
+                          <dd>{lead.email}</dd>
+                        </div>
+                      )}
+                      {lead.suburb && (
+                        <div>
+                          <dt className="text-xs text-muted-foreground">Location</dt>
+                          <dd>{lead.suburb}{lead.state ? `, ${lead.state}` : ''}</dd>
+                        </div>
+                      )}
+                      {lead.treatment_interest && (
+                        <div>
+                          <dt className="text-xs text-muted-foreground">Wants</dt>
+                          <dd>{lead.treatment_interest}</dd>
+                        </div>
+                      )}
+                      {lead.funding_type && (
+                        <div>
+                          <dt className="text-xs text-muted-foreground">Funding</dt>
+                          <dd>{lead.funding_type}</dd>
+                        </div>
+                      )}
+                      {lead.decision_maker && (
+                        <div>
+                          <dt className="text-xs text-muted-foreground">With them</dt>
+                          <dd>{lead.decision_maker}</dd>
+                        </div>
+                      )}
+                      {(lead as { source?: string }).source && (
+                        <div>
+                          <dt className="text-xs text-muted-foreground">Source</dt>
+                          <dd>{(lead as { source?: string }).source}</dd>
+                        </div>
+                      )}
                       <div>
-                        <dt className="text-muted-foreground">With them</dt>
-                        <dd>{lead.decision_maker}</dd>
+                        <dt className="text-xs text-muted-foreground">Stage</dt>
+                        <dd><Badge variant="secondary">{lead.stage}</Badge></dd>
                       </div>
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Calls</dt>
+                        <dd className="tabular-nums">{lead.call_count}</dd>
+                      </div>
+                    </dl>
+                  </>
+                )}
+
+                {railTab === 'notes' && (
+                  <>
+                    <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Notes history
+                    </p>
+                    {(notes ?? []).length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No notes yet for this lead.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {notes?.map((note) => (
+                          <li key={note.id} className="rounded-lg border border-border/40 p-3">
+                            <p className="text-sm leading-relaxed">{note.body}</p>
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              {note.source === 'ai' ? 'AI' : 'You'} · {format(new Date(note.created_at), 'd MMM, h:mm a')}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                  </dl>
-                </div>
+                  </>
+                )}
+
+                {railTab === 'clinics' && (
+                  <>
+                    <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      Suggested clinics
+                    </p>
+                    <div className="space-y-2">
+                      {(clinics ?? []).map((clinic) => (
+                        <div
+                          key={clinic.clinic_id}
+                          className="rounded-lg border border-border/40 p-3 text-sm"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium">{clinic.clinic_name}</p>
+                            {clinic.is_recommended && <Badge variant="success" className="text-[10px]">Rec</Badge>}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">{clinic.suburb}</p>
+                          <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+                            {clinic.distance_km} km · {clinic.drive_time_min} min
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </ScrollArea>
           </aside>
@@ -606,24 +709,28 @@ export function LeadRecordPage() {
             </div>
           </main>
 
-          {/* Right: stage-specific action panel */}
-          <aside className="flex min-w-0 flex-col overflow-auto">
-            <div className="p-4">
-              <StageActionPanel
-                stageName={currentStage?.name ?? ''}
-                clinics={clinics}
-                slots={slots}
-                selectedClinicId={selectedClinicId ?? defaultClinicId}
-                selectedSlot={selectedSlot}
-                selectedDate={selectedDate}
-                onSelectClinic={setSelectedClinicId}
-                onSelectSlot={setSelectedSlot}
-                onBook={handleBook}
-                bookingPending={createBooking.isPending}
-                calendar={
-                  <MiniCalendar selected={selectedDate} onSelect={setSelectedDate} />
-                }
-              />
+          {/* Right: booking or stage actions */}
+          <aside className="flex min-h-0 min-w-0 flex-col border-t border-border/40 lg:border-t-0">
+            <div className="flex min-h-0 flex-1 flex-col p-4">
+              {isBookStage ? (
+                <BookingPanel
+                  clinics={clinics}
+                  slots={slots}
+                  selectedClinicId={selectedClinicId ?? defaultClinicId}
+                  selectedSlot={selectedSlot}
+                  onSelectClinic={setSelectedClinicId}
+                  onSelectSlot={setSelectedSlot}
+                  onBook={handleBook}
+                  bookingPending={createBooking.isPending}
+                  calendar={
+                    <MiniCalendar selected={selectedDate} onSelect={setSelectedDate} />
+                  }
+                />
+              ) : (
+                <ScrollArea className="flex-1">
+                  <StageActionPanel stageName={currentStage?.name ?? ''} />
+                </ScrollArea>
+              )}
             </div>
           </aside>
         </div>
