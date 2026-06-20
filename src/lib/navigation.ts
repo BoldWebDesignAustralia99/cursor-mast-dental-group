@@ -12,6 +12,7 @@ import {
   Shield,
   Users,
   Wallet,
+  Workflow,
 } from 'lucide-react'
 import type { UserRole } from '@/lib/constants'
 
@@ -128,9 +129,9 @@ const internalNav: NavGroup[] = [
         permission: 'settings.view',
       },
       {
-        title: 'Workflows',
+        title: 'Workflow builder',
         href: '/admin/workflows',
-        icon: Settings,
+        icon: Workflow,
         permission: 'workflows.view',
       },
       {
@@ -260,7 +261,7 @@ export const commandSearchItems = [
   { title: 'Sales pods', href: '/team/pods', keywords: ['pods', 'teams'], permission: 'team.manage' },
   { title: 'Coaching', href: '/team/coaching', keywords: ['coaching', 'feedback'], permission: 'team.view' },
   { title: 'Settings', href: '/settings', keywords: ['config', 'rules'], permission: 'settings.view' },
-  { title: 'Workflows', href: '/admin/workflows', keywords: ['automation', 'workflow'], permission: 'workflows.view' },
+  { title: 'Workflow builder', href: '/admin/workflows', keywords: ['automation', 'workflow', 'workflows'], permission: 'workflows.view' },
   { title: 'Integrations', href: '/admin/integrations', keywords: ['api', 'webhooks', 'twilio'], permission: 'integrations.manage' },
   { title: 'AI chat', href: '/admin/chat', keywords: ['admin', 'analytics'], permission: 'ai.admin_chat' },
   { title: 'Permissions', href: '/permissions', keywords: ['access', 'roles'], permission: 'permissions.manage' },
